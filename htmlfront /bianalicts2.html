@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PratinhoPraTudo | Executive Decision Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Share+Tech+Mono&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .font-digital {
+        font-family: "Share Tech Mono", monospace;
+      }
+      ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#030712] text-slate-100 min-h-screen flex flex-col select-none"
+  >
+    <!-- HEADER -->
+    <header
+      class="bg-[#0b0f19] border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 shadow-2xl sticky top-0 z-50"
+    >
+      <div class="flex items-center gap-4">
+        <div
+          class="bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20"
+        >
+          <i class="fas fa-shield-halved text-xl"></i>
+        </div>
+        <div>
+          <h1
+            class="text-xl font-black tracking-wider text-white flex items-center gap-2"
+          >
+            PRATINHOPRATUDO ULTRA
+            <span
+              class="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-black px-2.5 py-0.5 rounded-md"
+              >PRESCRIPTIVE v6.0</span
+            >
+          </h1>
+          <p
+            class="text-[10px] text-slate-400 uppercase font-bold tracking-widest"
+          >
+            Controladoria Avançada, Matriz BCG de Menu e Inteligência de Margem
+          </p>
+        </div>
+      </div>
+
+      <!-- CONTROLES FILTROS TEMPORAIS -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div
+          class="bg-[#111827] border border-slate-800 p-1 rounded-xl flex gap-1"
+        >
+          <button
+            onclick="setPreset('hoje')"
+            class="text-[11px] font-bold px-3 py-1 rounded-lg transition hover:bg-slate-800 text-slate-300"
+            id="btn-p-hoje"
+          >
+            Hoje
+          </button>
+          <button
+            onclick="setPreset('7dias')"
+            class="text-[11px] font-bold px-3 py-1 rounded-lg transition hover:bg-slate-800 text-slate-300"
+          >
+            7 Dias
+          </button>
+          <button
+            onclick="setPreset('mes')"
+            class="text-[11px] font-bold px-3 py-1 rounded-lg transition hover:bg-slate-800 text-slate-300"
+          >
+            Mês Atual
+          </button>
+        </div>
+
+        <div
+          class="flex items-center bg-[#111827] border border-slate-700 rounded-xl px-3 py-1.5 gap-2"
+        >
+          <input
+            type="date"
+            id="data-inicio"
+            onchange="acionarMotorBI()"
+            class="bg-transparent text-white border-none outline-none text-xs font-bold focus:ring-0 w-28"
+          />
+          <span class="text-slate-500 text-xs font-bold">➔</span>
+          <input
+            type="date"
+            id="data-fim"
+            onchange="acionarMotorBI()"
+            class="bg-transparent text-white border-none outline-none text-xs font-bold focus:ring-0 w-28"
+          />
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-6 space-y-6 overflow-y-auto">
+      <!-- CENTRO DE COMANDO: AÇÕES DIRETAS (FAÇA X POR CAUSA DE Y E Z) -->
+      <section
+        class="bg-gradient-to-br from-slate-900 via-[#0a1124] to-slate-900 border border-cyan-500/20 rounded-2xl p-6 shadow-2xl"
+      >
+        <div
+          class="flex items-center gap-3 border-b border-slate-800 pb-4 mb-4 justify-between flex-wrap"
+        >
+          <div class="flex items-center gap-3">
+            <div class="bg-cyan-500/10 text-cyan-400 p-2 rounded-lg">
+              <i class="fas fa-wand-magic-sparkles text-lg"></i>
+            </div>
+            <div>
+              <h2
+                class="text-md font-black uppercase tracking-wider text-white"
+              >
+                Recomendações Prescritivas de Negócio
+              </h2>
+              <p class="text-[11px] text-slate-400 font-medium">
+                O motor cruzou dados financeiros e operacionais para prescrever
+                suas próximas decisões estratégicas:
+              </p>
+            </div>
+          </div>
+          <span
+            class="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono px-3 py-1 rounded-full font-bold"
+            >Análise em Tempo Real Ativa</span
+          >
+        </div>
+
+        <!-- Grid de Recomendações Dinâmicas -->
+        <div
+          class="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          id="container-prescricoes-core"
+        >
+          <!-- Injetado Dinamicamente -->
+        </div>
+      </section>
+
+      <!-- SEGUNDO GRID: ENGENHARIA FINANCEIRA DE PONTO DE EQUILÍBRIO -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <!-- Ponto de Equilíbrio (Break-Even) -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Alvo de Ponto de Equilíbrio Diário</span
+            >
+            <div class="flex justify-between items-baseline mt-1">
+              <h4
+                class="text-2xl font-black text-white font-digital"
+                id="txt-break-even-progresso"
+              >
+                R$ 0,00
+              </h4>
+              <span
+                class="text-xs font-bold text-slate-400"
+                id="txt-break-even-alvo"
+                >Meta: R$ 800,00</span
+              >
+            </div>
+            <!-- Progress Bar -->
+            <div
+              class="w-full bg-slate-950 h-2 rounded-full mt-3 overflow-hidden border border-slate-800"
+            >
+              <div
+                class="h-full bg-gradient-to-r from-orange-500 to-emerald-500 transition-all duration-500"
+                id="bar-break-even"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <p
+            class="text-[10px] text-slate-500 font-semibold mt-2"
+            id="txt-break-even-status"
+          >
+            Calculando tração de cobertura de custos...
+          </p>
+        </div>
+
+        <!-- Faturamento & Margem Bruta -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex justify-between items-center shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Faturamento Consolidado</span
+            >
+            <h3
+              class="text-2xl font-black text-emerald-400 mt-1 font-digital"
+              id="m-faturamento"
+            >
+              R$ 0,00
+            </h3>
+            <p
+              class="text-[10px] text-slate-500 font-semibold mt-1"
+              id="txt-periodo-sub"
+            >
+              Carregando fuso...
+            </p>
+          </div>
+          <i class="fas fa-wallet text-slate-800 text-3xl"></i>
+        </div>
+
+        <!-- Lucratividade Operacional -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex justify-between items-center shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Margem de Lucro Estimada (60%)</span
+            >
+            <h3
+              class="text-2xl font-black text-cyan-400 mt-1 font-digital"
+              id="m-lucro-liquido"
+            >
+              R$ 0,00
+            </h3>
+            <p class="text-[10px] text-slate-500 font-semibold mt-1">
+              Livre de CMV médio parametrizado
+            </p>
+          </div>
+          <i class="fas fa-chart-pie text-slate-800 text-3xl"></i>
+        </div>
+      </section>
+
+      <!-- INDICADORES SECUNDÁRIOS -->
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div
+          class="bg-[#0b0f19] border border-slate-800 p-4 rounded-xl shadow-md"
+        >
+          <span
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+            >Ticket Médio Geral</span
+          >
+          <h4
+            class="text-xl font-black text-sky-400 font-digital mt-1"
+            id="m-ticket"
+          >
+            R$ 0,00
+          </h4>
+          <p class="text-[10px] text-slate-500 font-medium" id="m-pedidos-sub">
+            0 comandas analisadas
+          </p>
+        </div>
+        <div
+          class="bg-[#0b0f19] border border-slate-800 p-4 rounded-xl shadow-md"
+        >
+          <span
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+            >Previsão de Caixa (Run Rate)</span
+          >
+          <h4
+            class="text-xl font-black text-amber-400 font-digital mt-1"
+            id="m-run-rate"
+          >
+            R$ 0,00
+          </h4>
+          <p class="text-[10px] text-slate-500 font-medium">
+            Média linear expandida para 30 dias
+          </p>
+        </div>
+        <div
+          class="bg-[#0b0f19] border border-slate-800 p-4 rounded-xl shadow-md flex justify-between items-center"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Descartes / Ruídos de Cozinha</span
+            >
+            <h4
+              class="text-xl font-black text-rose-500 font-digital mt-1"
+              id="m-descarte"
+            >
+              0
+            </h4>
+            <p class="text-[10px] text-slate-500 font-medium" id="m-oee-sub">
+              Eficiência de Processo: 100%
+            </p>
+          </div>
+          <button
+            onclick="registrarDescarteRapido()"
+            class="bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white px-2.5 py-1 rounded text-[10px] font-black transition"
+          >
+            + Perda
+          </button>
+        </div>
+      </section>
+
+      <!-- MATRIZ BCG & ENGENHARIA DE PRODUTOS -->
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <!-- MATRIZ STARS & DOGS (BCG DE CARDÁPIO) -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col"
+        >
+          <div class="mb-4 border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-black uppercase tracking-wider text-white">
+              <i class="fas fa-star text-amber-400 mr-1"></i> Classificação de
+              Performance (Matriz BCG)
+            </h3>
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              Separação analítica automática entre pratos líderes e pratos
+              críticos
+            </p>
+          </div>
+          <div
+            class="space-y-3 flex-1 overflow-y-auto"
+            id="container-matriz-bcg"
+          >
+            <!-- Injetado via JS -->
+          </div>
+        </div>
+
+        <!-- CANAIS E TRÁFEGO -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col"
+        >
+          <div class="mb-4 border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-black uppercase tracking-wider text-white">
+              <i class="fas fa-network-wired text-purple-400 mr-1"></i> Mix
+              Distribuição de Canais
+            </h3>
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              Representatividade de faturamento por rota de entrada
+            </p>
+          </div>
+          <div
+            class="space-y-4 flex-1 justify-center flex flex-col"
+            id="container-canais-venda"
+          ></div>
+        </div>
+
+        <!-- LOGS DE TRANSAÇÃO DO LEDGER -->
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col"
+        >
+          <div class="mb-4 border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-black uppercase tracking-wider text-white">
+              <i class="fas fa-folder-open text-sky-400 mr-1"></i> Transações
+              Contábeis
+            </h3>
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5">
+              Logs brutos auditados dentro do escopo selecionado
+            </p>
+          </div>
+          <div
+            class="overflow-y-auto max-h-64 space-y-2 pr-1"
+            id="lista-ledger-cards"
+          >
+            <!-- Cards compactos do ledger -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./bianalicts2js.js"></script>
+  </body>
+</html>

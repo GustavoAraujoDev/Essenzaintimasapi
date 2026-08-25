@@ -1,0 +1,10 @@
+groups:
+  - name: api-alerts
+    rules:
+      - alert: API_DOWN
+        expr: up{job="node-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "API está fora do ar"

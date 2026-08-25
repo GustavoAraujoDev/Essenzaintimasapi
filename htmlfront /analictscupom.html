@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PratinhoPraTudo | Advanced Analytics Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Share+Tech+Mono&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .font-digital {
+        font-family: "Share Tech Mono", monospace;
+      }
+      ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#020617] text-slate-100 min-h-screen flex flex-col select-none"
+  >
+    <header
+      class="bg-[#0b0f19] border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4 sticky top-0 z-50 shadow-2xl"
+    >
+      <div class="flex items-center gap-4">
+        <div
+          class="bg-gradient-to-tr from-indigo-500 via-purple-600 to-pink-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20"
+        >
+          <i class="fas fa-chart-network text-xl animate-pulse"></i>
+        </div>
+        <div>
+          <h1
+            class="text-xl font-black tracking-wider text-white flex items-center gap-2"
+          >
+            PRATINHOPRATUDO
+            <span
+              class="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 font-black px-2.5 py-0.5 rounded-md font-mono"
+              >DATA-DRIVEN CORE v7.0</span
+            >
+          </h1>
+          <p
+            class="text-[10px] text-slate-400 uppercase font-bold tracking-widest"
+          >
+            Mapeamento estatístico multidimensional e cruzamento probabilístico
+            de margens residuais
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="flex items-center gap-4 bg-[#0f172a] border border-slate-800 rounded-xl px-5 py-2"
+      >
+        <div>
+          <label
+            class="block text-[9px] font-black text-slate-400 uppercase tracking-wider"
+            >Margem Alvo Padrão</label
+          >
+          <div class="flex items-center gap-1 mt-0.5">
+            <input
+              type="number"
+              id="company-margin"
+              class="bg-slate-950 border border-slate-700 rounded px-2 py-0.5 text-xs text-emerald-400 font-bold font-digital w-14 focus:outline-none focus:border-emerald-500"
+              min="1"
+              max="100"
+            />
+            <span class="text-xs text-slate-400 font-bold">%</span>
+          </div>
+        </div>
+        <button
+          onclick="saveCompanyMargin()"
+          class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] px-3 py-2 rounded-lg transition"
+        >
+          Recalcular Malha
+        </button>
+      </div>
+    </header>
+
+    <main class="flex-1 p-6 space-y-6 overflow-y-auto">
+      <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Cupons com Performance Ativa</span
+            >
+            <h3
+              class="text-3xl font-black text-white font-digital mt-1"
+              id="metric-active"
+            >
+              0
+            </h3>
+          </div>
+          <p class="text-[10px] text-slate-500 font-semibold mt-2">
+            Volume atualizado em tempo real via pooling
+          </p>
+        </div>
+
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Lucro Líquido Real Consolidado</span
+            >
+            <h3
+              class="text-3xl font-extrabold text-emerald-400 mt-1 font-digital"
+              id="metric-usages"
+            >
+              R$ 0,00
+            </h3>
+          </div>
+          <p class="text-[10px] text-slate-500 font-semibold mt-2">
+            Considerando dedução de descontos absolutos
+          </p>
+        </div>
+
+        <div
+          class="bg-[#0b0f19] border border-slate-800 rounded-xl p-4 flex flex-col justify-between shadow-lg"
+        >
+          <div>
+            <span
+              class="text-[10px] font-black text-slate-400 uppercase tracking-widest block"
+              >Gross Merchandise Volume (GMV)</span
+            >
+            <h3
+              class="text-3xl font-black text-indigo-400 mt-1 font-digital"
+              id="metric-phones"
+            >
+              R$ 0,00
+            </h3>
+          </div>
+          <p class="text-[10px] text-slate-500 font-semibold mt-2">
+            Faturamento bruto interceptado por cupons
+          </p>
+        </div>
+      </section>
+
+      <section
+        class="bg-[#0b0f19] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div
+          class="p-5 border-b border-slate-800 flex flex-wrap justify-between items-center gap-4 bg-[#0d1322]"
+        >
+          <div class="flex items-center gap-3">
+            <div class="bg-purple-500/10 text-purple-400 p-2 rounded-lg">
+              <i class="fas fa-server text-md"></i>
+            </div>
+            <div>
+              <h2
+                class="text-md font-black uppercase tracking-wider text-white"
+              >
+                Console Analítico de Telemetria e Comportamento
+              </h2>
+              <p class="text-[11px] text-slate-400 font-medium">
+                Cruzamento matricial completo de volumetria, elasticidade de
+                coorte e auditoria antifraude por coupon code
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <input
+              type="text"
+              id="search-input"
+              oninput="fetchAndRender()"
+              placeholder="FILTRAR POR CÓDIGO..."
+              class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs font-mono font-bold text-white focus:outline-none focus:border-purple-500 w-64 placeholder:text-slate-600"
+            />
+            <button
+              onclick="openModal()"
+              class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-black text-xs px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-lg"
+            >
+              <i class="fas fa-plus"></i> Novo Cupom
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr
+                class="border-b border-slate-800 bg-[#070b14] text-[10px] font-black text-slate-400 uppercase tracking-wider"
+              >
+                <th class="px-6 py-4">Cupom</th>
+                <th class="px-6 py-4">Parâmetros Atuais</th>
+                <th class="px-6 py-4">Uso / Ritmo</th>
+                <th class="px-6 py-4">Volumetria Bruta</th>
+                <th class="px-6 py-4">Métricas Financeiras</th>
+                <th class="px-6 py-4 w-[380px]">
+                  Evidências de Dados & Diagnóstico IA
+                </th>
+                <th class="px-6 py-4 text-center">Status Global</th>
+                <th class="px-6 py-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody
+              id="coupons-table-body"
+              class="divide-y divide-slate-800/60 text-slate-300"
+            ></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div
+      id="modal-finance-details"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4"
+    >
+      <div
+        class="bg-[#0b0f19] border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl p-6 space-y-4"
+      >
+        <h3
+          class="text-sm font-black uppercase text-white border-b border-slate-800 pb-2"
+        >
+          <i class="fas fa-calculator mr-2"></i>Memória Estatística
+        </h3>
+        <p
+          id="detail-coupon-code"
+          class="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/5 px-2 py-1 rounded w-max uppercase"
+        ></p>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-400">GMV Acumulado:</span
+            ><span
+              id="detail-revenue"
+              class="font-bold text-white font-digital"
+            ></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Margem Alvo Calculada:</span
+            ><span
+              id="detail-margin"
+              class="font-bold text-emerald-400 font-digital"
+            ></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Margem Comercial Teórica:</span
+            ><span
+              id="detail-theoretical-profit"
+              class="font-bold text-white font-digital"
+            ></span>
+          </div>
+          <div class="flex justify-between text-rose-400">
+            <span>(-) Descontos Concedidos:</span
+            ><span id="detail-discounts" class="font-bold font-digital"></span>
+          </div>
+        </div>
+        <div
+          class="flex justify-between items-center bg-[#050811] p-3 rounded-xl border border-slate-800"
+        >
+          <span class="text-xs font-black uppercase text-slate-300"
+            >Margem Líquida Comercial Restante:</span
+          >
+          <span
+            id="detail-final-result"
+            class="font-digital font-black text-lg"
+          ></span>
+        </div>
+        <button
+          onclick="closeFinanceModal()"
+          class="w-full bg-slate-800 text-slate-200 text-xs font-bold py-2 rounded-xl"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="coupon-modal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4"
+    >
+      <div
+        class="bg-[#0b0f19] border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl"
+      >
+        <form id="coupon-form">
+          <input type="hidden" id="coupon-id" />
+          <div
+            class="px-6 py-4 border-b border-slate-800 bg-[#0d1322] flex justify-between items-center"
+          >
+            <h3
+              id="modal-title"
+              class="text-sm font-black uppercase tracking-wider text-white"
+            >
+              Formulário de Engenharia de Cupom
+            </h3>
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="text-slate-400 hover:text-white transition text-lg"
+            >
+              <i class="fas fa-xmark"></i>
+            </button>
+          </div>
+          <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Código *</label
+              >
+              <input
+                type="text"
+                id="form-code"
+                required
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono uppercase focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Tipo *</label
+              >
+              <select
+                id="form-type"
+                onchange="toggleTypeFields()"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold focus:outline-none"
+              >
+                <option value="percentage">Porcentagem (%)</option>
+                <option value="fixed">Valor Fixo (R$)</option>
+              </select>
+            </div>
+            <div>
+              <label
+                id="label-value"
+                class="block text-slate-400 font-bold mb-1 uppercase"
+                >Valor *</label
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="form-value"
+                required
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-digital focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Gatilho Mínimo (R$) *</label
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="form-minPurchase"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-digital focus:outline-none"
+              />
+            </div>
+            <div id="max-discount-container">
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Teto de Desconto Max (R$)</label
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="form-maxDiscount"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-digital focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Expiração *</label
+              >
+              <input
+                type="date"
+                id="form-expiration"
+                required
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Limite Global Usos</label
+              >
+              <input
+                type="number"
+                id="form-usageLimit"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-slate-400 font-bold mb-1 uppercase"
+                >Limite por Telefone</label
+              >
+              <input
+                type="number"
+                id="form-limitPerPhone"
+                value="1"
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none"
+              />
+            </div>
+            <div
+              class="sm:col-span-2 flex items-center gap-2 bg-[#050811] p-3 rounded-xl border border-slate-800 mt-2"
+            >
+              <input
+                type="checkbox"
+                id="form-isActive"
+                checked
+                class="w-4 h-4 rounded bg-slate-950 border-slate-800 cursor-pointer"
+              />
+              <label
+                for="form-isActive"
+                class="text-slate-300 font-black uppercase tracking-wide cursor-pointer"
+                >Disponibilizar Cupom Imediatamente</label
+              >
+            </div>
+          </div>
+          <div
+            class="px-6 py-3 bg-[#0d1322] border-t border-slate-800 text-right space-x-2"
+          >
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="bg-slate-800 text-slate-200 font-bold px-4 py-2 rounded-xl"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="bg-indigo-600 text-white font-black px-5 py-2 rounded-xl"
+            >
+              Salvar Parâmetros
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://127.0.0.1:3000/cupom/admin/coupons";
+      let MARGEM_PADRAO =
+        parseFloat(localStorage.getItem("companyMargin")) || 40;
+      let currentCouponsList = [];
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const marginInput = document.getElementById("company-margin");
+        if (marginInput) marginInput.value = MARGEM_PADRAO;
+        document
+          .getElementById("coupon-form")
+          .addEventListener("submit", saveCoupon);
+        fetchAndRender();
+      });
+
+      function saveCompanyMargin() {
+        const marginInput = document.getElementById("company-margin");
+        if (!marginInput) return;
+        const value = parseFloat(marginInput.value);
+        if (isNaN(value) || value <= 0 || value > 100)
+          return alert("Margem inválida.");
+        MARGEM_PADRAO = value;
+        localStorage.setItem("companyMargin", MARGEM_PADRAO);
+        renderTable(currentCouponsList);
+      }
+
+      async function fetchAndRender() {
+        try {
+          const response = await fetch(API_BASE_URL);
+          if (!response.ok) throw new Error();
+          currentCouponsList = await response.json();
+          renderTable(currentCouponsList);
+        } catch (error) {
+          document.getElementById("coupons-table-body").innerHTML = `
+          <tr><td colspan="8" class="px-6 py-8 text-center text-rose-500 font-medium bg-[#0b0f19]">Falha ao sincronizar com a API de cupons.</td></tr>`;
+        }
+      }
+
+      // ENGINE DE RENDERIZAÇÃO E PROCESSAMENTO ESTATÍSTICO COMPLETO
+      function renderTable(coupons) {
+        const tbody = document.getElementById("coupons-table-body");
+        const searchInput = document.getElementById("search-input");
+        const searchTerm = searchInput
+          ? searchInput.value.toUpperCase().trim()
+          : "";
+        tbody.innerHTML = "";
+
+        const filteredCoupons = coupons.filter((c) =>
+          c.code.includes(searchTerm),
+        );
+        calculateAndSetMetrics(coupons);
+
+        if (filteredCoupons.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500 font-medium bg-[#0b0f19]">Nenhum dado capturado.</td></tr>`;
+          return;
+        }
+
+        filteredCoupons.forEach((coupon) => {
+          const isExpired = new Date() > new Date(coupon.expirationDate);
+          const formatValue =
+            coupon.type === "percentage"
+              ? `${coupon.value}%`
+              : `R$ ${coupon.value.toFixed(2)}`;
+          const dateFormatted = new Date(
+            coupon.expirationDate,
+          ).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
+          // -------------------------------------------------------------
+          // VARIÁVEIS DE MAPEAMENTO MATRICIAL (VARIÁVEIS DE COMPORTAMENTO)
+          // -------------------------------------------------------------
+          let totalRevenue = 0;
+          let totalDiscountGranted = 0;
+
+          const uniquePhonesMap = {}; // Controle de Coorte e Frequência
+          const velocityCheck = []; // Vetor temporal para identificar rajadas (Fraude de Velocidade)
+
+          let peakDayOrders = 0; // Sex, Sáb, Dom
+          let slowDayOrders = 0; // Seg, Ter, Qua, Qui
+
+          if (coupon.usedBy && Array.isArray(coupon.usedBy)) {
+            // Ordena o array cronologicamente para análise de velocidade linear
+            const sortedUsages = [...coupon.usedBy].sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+            );
+
+            sortedUsages.forEach((usage) => {
+              const orderVal = parseFloat(usage.orderValue || 0);
+              const discApplied = parseFloat(usage.discountApplied || 0);
+
+              totalRevenue += orderVal;
+              totalDiscountGranted += discApplied;
+
+              // Análise de Clientes Únicos e Reutilização
+              if (usage.customerPhone) {
+                const phone = usage.customerPhone.trim();
+                uniquePhonesMap[phone] = (uniquePhonesMap[phone] || 0) + 1;
+              }
+
+              // Análise Temporal de Coorte Diária
+              const orderDate = usage.createdAt
+                ? new Date(usage.createdAt)
+                : new Date();
+              velocityCheck.push(orderDate.getTime());
+
+              const day = orderDate.getDay();
+              if (day === 0 || day === 5 || day === 6) peakDayOrders++;
+              else slowDayOrders++;
+            });
+          }
+
+          // -------------------------------------------------------------
+          // PREPARAÇÃO DOS INDICADORES MATEMÁTICOS (PROVAS DO PORQUÊ)
+          // -------------------------------------------------------------
+          const usagesCount = coupon.usageCount || 0;
+          const ticketMedio = usagesCount > 0 ? totalRevenue / usagesCount : 0;
+          const fatorMargem = MARGEM_PADRAO / 100;
+
+          // Cálculo exato da Margem Líquida Retida Comercial
+          const lucroComercialSemCupom = totalRevenue * fatorMargem;
+          const lucroRealRetido = lucroComercialSemCupom - totalDiscountGranted;
+
+          // ROI da Campanha
+          const roiCampanha =
+            totalDiscountGranted > 0 ? totalRevenue / totalDiscountGranted : 0;
+
+          // Métricas de Coorte (Usuários Únicos vs Frequência)
+          const totalClientesUnicos = Object.keys(uniquePhonesMap).length;
+          const totalClientesRecorrentes = Object.values(
+            uniquePhonesMap,
+          ).filter((v) => v > 1).length;
+          const taxaRecorrenciaCupom =
+            totalClientesUnicos > 0
+              ? (totalClientesRecorrentes / totalClientesUnicos) * 100
+              : 0;
+
+          // Cálculo de Vazamento de Margem Absoluto (Porcentagem do Lucro que sumiu)
+          const taxaVazamentoMargem =
+            lucroComercialSemCupom > 0
+              ? (totalDiscountGranted / lucroComercialSemCupom) * 100
+              : 0;
+
+          // Algoritmo de Detecção de Rajada de Fraude de Velocidade (Mais de 3 requisições no mesmo minuto)
+          let detectouRajadaSegundos = false;
+          if (velocityCheck.length >= 3) {
+            for (let i = 2; i < velocityCheck.length; i++) {
+              if (velocityCheck[i] - velocityCheck[i - 2] < 60000) {
+                // Janela de 60 segundos
+                detectouRajadaSegundos = true;
+                break;
+              }
+            }
+          }
+
+          // Verificação de Quebra de Margem na Linha Base (Pedido Mínimo)
+          let descontoNoCorteMinimo =
+            coupon.type === "percentage"
+              ? coupon.minPurchaseValue * (coupon.value / 100)
+              : coupon.value;
+          if (
+            coupon.maxDiscountValue &&
+            descontoNoCorteMinimo > coupon.maxDiscountValue
+          ) {
+            descontoNoCorteMinimo = coupon.maxDiscountValue;
+          }
+          const margemDoPedidoMinimo =
+            coupon.minPurchaseValue * fatorMargem - descontoNoCorteMinimo;
+
+          // Verificação de Contas Suspeitas (Múltiplas transações no mesmo número acima do limite saudável)
+          const cpfsInfratores = Object.entries(uniquePhonesMap).filter(
+            ([_, qtd]) => qtd > coupon.limitPerPhone,
+          ).length;
+
+          // -------------------------------------------------------------
+          // MOTOR DE INTELIGÊNCIA ARTIFICIAL: EXPLICAÇÃO COM BASE EM DADOS
+          // -------------------------------------------------------------
+          let iaPrescriptionHTML = "";
+
+          if (cpfsInfratores > 0 || detectouRajadaSegundos) {
+            iaPrescriptionHTML = `
+              <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 space-y-1 text-xs">
+                <span class="text-[10px] font-black text-rose-400 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-shield-virus animate-bounce"></i> ANOMALIA: FRAUDE CONFIRMADA</span>
+                <p class="text-slate-300 leading-relaxed">
+                  <b>Por que:</b> Detectamos <b>${cpfsInfratores} número(s)</b> burlando o limite cadastrado de usos por ID, somado a rajadas de requisição inferiores a 60s (<span class="font-mono text-rose-400">Ataque de Script</span>).
+                </p>
+                <div class="text-[11px] text-rose-300 font-extrabold bg-rose-950/40 p-2 rounded border border-rose-800/40 mt-1">
+                  <i class="fas fa-ban mr-1"></i> AÇÃO: Ative captcha no checkout e mude "Limite por Telefone" para 1.
+                </div>
+              </div>`;
+          } else if (
+            margemDoPedidoMinimo < 0 &&
+            coupon.isActive &&
+            !isExpired
+          ) {
+            iaPrescriptionHTML = `
+              <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1 text-xs">
+                <span class="text-[10px] font-black text-amber-400 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-arrow-down-to-square"></i> MARGEM BRUTA NEGATIVA NO TICKET MÍNIMO</span>
+                <p class="text-slate-300 leading-relaxed">
+                  <b>Por que:</b> No pedido de R$ ${coupon.minPurchaseValue.toFixed(2)}, o desconto de R$ ${descontoNoCorteMinimo.toFixed(2)} engole sua margem alvo de ${MARGEM_PADRAO}%, gerando déficit operacional de <span class="font-mono text-rose-400">R$ ${margemDoPedidoMinimo.toFixed(2)}</span> por entrega.
+                </p>
+                <div class="text-[11px] text-amber-300 font-extrabold bg-amber-950/40 p-2 rounded border border-amber-800/40 mt-1">
+                  <i class="fas fa-arrows-up-to-line mr-1"></i> AÇÃO: Mude a Regra de Mínimo para R$ ${(descontoNoCorteMinimo / fatorMargem).toFixed(0)}.
+                </div>
+              </div>`;
+          } else if (
+            usagesCount > 0 &&
+            (peakDayOrders / usagesCount) * 100 >= 65
+          ) {
+            const pctPico = (peakDayOrders / usagesCount) * 100;
+            iaPrescriptionHTML = `
+              <div class="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 space-y-1 text-xs">
+                <span class="text-[10px] font-black text-orange-400 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-scissors"></i> CANIBALIZAÇÃO DE DEMANDA ORGÂNICA</span>
+                <p class="text-slate-300 leading-relaxed">
+                  <b>Por que:</b> <b>${pctPico.toFixed(1)}% dos usos</b> (${peakDayOrders} pedidos) ocorrem de Sex a Dom. O cliente usou o desconto em um horário com fila de espera natural na cozinha.
+                </p>
+                <div class="text-[11px] text-orange-300 font-extrabold bg-orange-950/40 p-2 rounded border border-orange-800/40 mt-1">
+                  <i class="fas fa-calendar-xmark mr-1"></i> AÇÃO: Bloqueie o cupom no fim de semana. Force uso apenas de Seg a Qui.
+                </div>
+              </div>`;
+          } else if (taxaVazamentoMargem >= 60 && usagesCount > 0) {
+            iaPrescriptionHTML = `
+              <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-3 space-y-1 text-xs">
+                <span class="text-[10px] font-black text-red-400 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-sink"></i> ALTO VAZAMENTO (MARGIN DRAIN)</span>
+                <p class="text-slate-300 leading-relaxed">
+                  <b>Por que:</b> O incentivo drenou <b>${taxaVazamentoMargem.toFixed(1)}%</b> de todo o lucro potencial teórico gerado. Os clientes estão comprando o produto principal sem adicionar bebidas ou adicionais rentáveis.
+                </p>
+                <div class="text-[11px] text-red-300 font-extrabold bg-red-950/40 p-2 rounded border border-red-800/40 mt-1">
+                  <i class="fas fa-arrows-retract mr-1"></i> AÇÃO: Reduza o valor real do cupom ou altere o gatilho para Frete Grátis.
+                </div>
+              </div>`;
+          } else if (slowDayOrders > peakDayOrders && usagesCount > 0) {
+            iaPrescriptionHTML = `
+              <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 space-y-1 text-xs">
+                <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-chart-line-up"></i> EFICIÊNCIA DE COORTE (ALAVANCA INCREMENTAL)</span>
+                <p class="text-slate-300 leading-relaxed">
+                  <b>Por que:</b> Gerou <b>${slowDayOrders} pedidos</b> em dias de calmaria comercial. Mantém equipe ativa e mitiga ociosidade operacional, apresentando ROI saudável de <span class="font-mono text-emerald-400 font-bold">${roiCampanha.toFixed(1)}x</span>.
+                </p>
+                <div class="text-[11px] text-emerald-300 font-extrabold bg-emerald-950/40 p-2 rounded border border-emerald-800/40 mt-1">
+                  <i class="fas fa-rocket mr-1"></i> AÇÃO: Impulsione via CRM! Dispare push e WhatsApp para esta base.
+                </div>
+              </div>`;
+          } else {
+            iaPrescriptionHTML = `
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-400 text-xs flex items-center gap-2">
+                <i class="fas fa-circle-notch text-purple-500 animate-spin"></i>
+                <span>Amostragem estatística em consolidação. Aguardando mais dados transacionais no banco...</span>
+              </div>`;
+          }
+
+          // RÓTULOS DE ELASTICIDADE BASEADOS NO ROI REAL
+          let labelElasticidade = `<div class="text-[9px] font-bold px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-400 w-max mt-1">Sem Amostra</div>`;
+          if (usagesCount > 0) {
+            if (roiCampanha > 7)
+              labelElasticidade = `<div class="text-[9px] font-black px-2 py-0.5 rounded border border-purple-500/30 bg-purple-500/10 text-purple-400 w-max mt-1 uppercase tracking-wider">Alta Elasticidade Viral</div>`;
+            else if (roiCampanha >= 3.5)
+              labelElasticidade = `<div class="text-[9px] font-black px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 w-max mt-1 uppercase tracking-wider">Demanda Elástica Saudável</div>`;
+            else
+              labelElasticidade = `<div class="text-[9px] font-black px-2 py-0.5 rounded border border-rose-500/30 bg-rose-500/10 text-rose-400 w-max mt-1 uppercase tracking-wider">Inelástico / Compra Forçada</div>`;
+          }
+
+          // IDENTIFICADOR DE SAÚDE DA MARGEM
+          let classSaude =
+            "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20";
+          let labelSaude = "Lucrativo";
+          if (lucroRealRetido < 0) {
+            classSaude =
+              "text-rose-400 bg-rose-500/10 border border-rose-500/20 animate-pulse font-black";
+            labelSaude = "Déficit Comercial";
+          } else if (usagesCount > 0 && lucroRealRetido === 0) {
+            classSaude =
+              "text-amber-400 bg-amber-500/10 border border-amber-500/20 font-bold";
+            labelSaude = "Margem Zero (Breakeven)";
+          }
+
+          // BADGE DO STATUS ATUAL DO FILTRO DE ATIVAÇÃO
+          let badgeStatus = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><span class="w-1 h-1 rounded-full bg-emerald-400 animate-ping"></span>Ativo</span>`;
+          if (!coupon.isActive) {
+            badgeStatus = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Inativo</span>`;
+          } else if (isExpired) {
+            badgeStatus = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Expirado</span>`;
+          }
+
+          const tr = document.createElement("tr");
+          tr.className =
+            "hover:bg-slate-900/30 border-b border-slate-800/60 transition-all text-xs";
+          tr.innerHTML = `
+            <td class="px-6 py-4 font-mono font-black"><span class="bg-slate-900 border border-slate-800 px-2 py-1 rounded text-purple-400 block w-max uppercase">${coupon.code}</span></td>
+            <td class="px-6 py-4 font-black text-white text-sm">${formatValue}${labelElasticidade}</td>
+            <td class="px-6 py-4 space-y-0.5">
+              <div>Corte Mín: <b class="text-slate-200 font-digital text-xs">R$ ${coupon.minPurchaseValue.toFixed(2)}</b></div>
+              <div>Ticket Real: <b class="text-indigo-400 font-digital text-xs">R$ ${ticketMedio.toFixed(2)}</b></div>
+              <div class="text-[10px] text-slate-500"><i class="fa-regular fa-clock mr-1"></i>Expira: ${dateFormatted}</div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="font-digital text-sm font-bold text-white">${usagesCount} <span class="text-slate-600 font-normal text-xs">/ ${coupon.usageLimit || "∞"}</span></div>
+              <div class="text-[10px] text-slate-400 font-medium mt-0.5">Volatilidade Freq: <span class="font-bold text-purple-400">${taxaRecorrenciaCupom.toFixed(0)}%</span></div>
+            </td>
+            <td class="px-6 py-4 space-y-0.5">
+              <div class="text-slate-400">GMV: <span class="font-bold text-white font-digital">R$ ${totalRevenue.toFixed(2)}</span></div>
+              <div class="text-[11px] text-rose-400">Dedução: <span class="font-digital">-R$ ${totalDiscountGranted.toFixed(2)}</span></div>
+              <div class="text-[9px] font-black text-indigo-400 bg-indigo-500/10 px-1 py-0.2 rounded border border-indigo-500/20 w-max mt-0.5">ROI: ${roiCampanha.toFixed(1)}x</div>
+            </td>
+            <td class="px-6 py-4">
+              ${iaPrescriptionHTML}
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex flex-col items-center gap-1.5">
+                ${badgeStatus}
+                <div class="px-2 py-0.5 rounded text-[9px] uppercase font-black tracking-wider ${classSaude}">
+                  ${labelSaude}<br><span class="font-digital text-[11px]">R$ ${lucroRealRetido.toFixed(2)}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap bg-slate-950/10">
+              <button onclick="openFinanceModal('${coupon._id}')" class="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded-xl transition"><i class="fa-solid fa-calculator text-sm"></i></button>
+              <button onclick="exportSubscribersToCSV('${coupon.code}')" class="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition"><i class="fa-solid fa-file-csv text-sm"></i></button>
+              <span class="text-slate-800">|</span>
+              <button onclick="editCoupon('${coupon._id}')" class="p-2 text-amber-400 hover:bg-amber-500/10 rounded-xl transition"><i class="fa-solid fa-pen text-xs"></i></button>
+              <button onclick="deleteCoupon('${coupon._id}')" class="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition"><i class="fa-solid fa-trash text-xs"></i></button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // OUTROS MÉTODOS AUXILIARES MANTIDOS PARA O CONTROLE COMPLETO DO CONTEXTO DE TELA
+      function calculateAndSetMetrics(coupons) {
+        let activeCount = 0;
+        let totalGMV = 0;
+        let totalDiscounts = 0;
+        coupons.forEach((c) => {
+          if (c.isActive && new Date() <= new Date(c.expirationDate))
+            activeCount++;
+          if (c.usedBy) {
+            c.usedBy.forEach((u) => {
+              totalGMV += parseFloat(u.orderValue || 0);
+              totalDiscounts += parseFloat(u.discountApplied || 0);
+            });
+          }
+        });
+        const lucroGlobal = totalGMV * (MARGEM_PADRAO / 100) - totalDiscounts;
+        document.getElementById("metric-active").innerText = activeCount;
+        document.getElementById("metric-usages").innerText =
+          lucroGlobal.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          });
+        document.getElementById("metric-phones").innerText =
+          totalGMV.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          });
+      }
+
+      async function saveCoupon(e) {
+        e.preventDefault();
+        const id = document.getElementById("coupon-id").value;
+        const rawDate = document.getElementById("form-expiration").value;
+        const couponData = {
+          code: document.getElementById("form-code").value.toUpperCase().trim(),
+          type: document.getElementById("form-type").value,
+          value: parseFloat(document.getElementById("form-value").value),
+          minPurchaseValue: parseFloat(
+            document.getElementById("form-minPurchase").value || 0,
+          ),
+          maxDiscountValue: document.getElementById("form-maxDiscount").value
+            ? parseFloat(document.getElementById("form-maxDiscount").value)
+            : null,
+          expirationDate: new Date(rawDate + "T23:59:59").toISOString(),
+          usageLimit: document.getElementById("form-usageLimit").value
+            ? parseInt(document.getElementById("form-usageLimit").value)
+            : null,
+          limitPerPhone: parseInt(
+            document.getElementById("form-limitPerPhone").value || 1,
+          ),
+          isActive: document.getElementById("form-isActive").checked,
+        };
+        const url = id ? `${API_BASE_URL}/${id}` : API_BASE_URL;
+        const method = id ? "PUT" : "POST";
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(couponData),
+          });
+          if (res.ok) {
+            closeModal();
+            fetchAndRender();
+          }
+        } catch (e) {
+          alert("Erro de rede.");
+        }
+      }
+
+      async function deleteCoupon(id) {
+        if (!confirm("Remover permanentemente?")) return;
+        try {
+          const res = await fetch(`${API_BASE_URL}/${id}`, {
+            method: "DELETE",
+          });
+          if (res.ok) fetchAndRender();
+        } catch (e) {}
+      }
+
+      function openModal() {
+        document.getElementById("coupon-form").reset();
+        document.getElementById("coupon-id").value = "";
+        document.getElementById("form-code").disabled = false;
+        document.getElementById("coupon-modal").classList.remove("hidden");
+        toggleTypeFields();
+      }
+
+      function editCoupon(id) {
+        const c = currentCouponsList.find((x) => x._id === id);
+        if (!c) return;
+        document.getElementById("coupon-id").value = c._id;
+        document.getElementById("form-code").value = c.code;
+        document.getElementById("form-code").disabled = true;
+        document.getElementById("form-type").value = c.type;
+        document.getElementById("form-value").value = c.value;
+        document.getElementById("form-minPurchase").value = c.minPurchaseValue;
+        document.getElementById("form-maxDiscount").value =
+          c.maxDiscountValue || "";
+        document.getElementById("form-expiration").value =
+          c.expirationDate.split("T")[0];
+        document.getElementById("form-usageLimit").value = c.usageLimit || "";
+        document.getElementById("form-limitPerPhone").value = c.limitPerPhone;
+        document.getElementById("form-isActive").checked = c.isActive;
+        document.getElementById("coupon-modal").classList.remove("hidden");
+        toggleTypeFields();
+      }
+
+      function openFinanceModal(id) {
+        const c = currentCouponsList.find((x) => x._id === id);
+        if (!c) return;
+        let rev = 0;
+        let disc = 0;
+        if (c.usedBy)
+          c.usedBy.forEach((u) => {
+            rev += u.orderValue;
+            disc += u.discountApplied;
+          });
+        const theoretical = rev * (MARGEM_PADRAO / 100);
+        const finalRes = theoretical - disc;
+        document.getElementById("detail-coupon-code").innerText = c.code;
+        document.getElementById("detail-revenue").innerText =
+          "R$ " + rev.toFixed(2);
+        document.getElementById("detail-margin").innerText =
+          MARGEM_PADRAO + "%";
+        document.getElementById("detail-theoretical-profit").innerText =
+          "R$ " + theoretical.toFixed(2);
+        document.getElementById("detail-discounts").innerText =
+          "-R$ " + disc.toFixed(2);
+        document.getElementById("detail-final-result").innerText =
+          "R$ " + finalRes.toFixed(2);
+        document
+          .getElementById("modal-finance-details")
+          .classList.remove("hidden");
+      }
+
+      function closeFinanceModal() {
+        document
+          .getElementById("modal-finance-details")
+          .classList.add("hidden");
+      }
+      function closeModal() {
+        document.getElementById("coupon-modal").classList.add("hidden");
+      }
+      function toggleTypeFields() {
+        const type = document.getElementById("form-type").value;
+        document.getElementById("max-discount-container").style.opacity =
+          type === "percentage" ? "1" : "0.4";
+        document.getElementById("form-maxDiscount").disabled =
+          type !== "percentage";
+      }
+    </script>
+  </body>
+</html>

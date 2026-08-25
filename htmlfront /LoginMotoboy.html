@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motoboy - Autenticação</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .auth-container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        width: 340px;
+      }
+
+      h2 {
+        text-align: center;
+        color: #ff6600;
+        margin-top: 0;
+        margin-bottom: 20px;
+      }
+
+      .tabs {
+        display: flex;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+      }
+
+      .tab {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        cursor: pointer;
+        color: #666;
+        font-weight: bold;
+      }
+
+      .tab.active {
+        color: #ff6600;
+        border-bottom: 2px solid #ff6600;
+      }
+
+      .form-group {
+        display: none;
+      }
+
+      .form-group.active {
+        display: block;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 11px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+
+      .section-title {
+        font-size: 13px;
+        color: #999;
+        text-transform: uppercase;
+        font-weight: bold;
+        margin-top: 12px;
+        margin-bottom: 4px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        background: #ff6600;
+        color: white;
+        border: 0;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+        margin-top: 15px;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #e05500;
+      }
+
+      .message {
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 15px;
+        display: none;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-container">
+      <h2 id="main-title">🛵 Portal do Entregador</h2>
+
+      <div id="msg" class="message"></div>
+
+      <div class="tabs" id="authTabs">
+        <div class="tab active" onclick="switchTab('login')">Entrar</div>
+        <div class="tab" onclick="switchTab('register')">Cadastrar-se</div>
+      </div>
+
+      <form id="loginForm" class="form-group active">
+        <input type="email" id="loginEmail" placeholder="Seu e-mail" required />
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Sua senha"
+          required
+        />
+        <button type="submit">Entrar no Painel</button>
+      </form>
+
+      <form id="registerForm" class="form-group">
+        <div class="section-title">Dados de Acesso</div>
+        <input
+          type="email"
+          id="regEmail"
+          placeholder="E-mail de acesso"
+          required
+        />
+        <input
+          type="password"
+          id="regPassword"
+          placeholder="Crie uma senha"
+          required
+        />
+
+        <div class="section-title">Dados do Perfil</div>
+        <input type="text" id="regNome" placeholder="Nome Completo" required />
+        <input
+          type="text"
+          id="regPhone"
+          placeholder="Telefone / WhatsApp"
+          required
+        />
+        <input type="text" id="regDocument" placeholder="CPF" required />
+
+        <button type="submit">Criar Conta</button>
+      </form>
+
+      <form id="veiculoForm" class="form-group">
+        <div class="section-title">Dados do Veículo / Moto</div>
+        <input
+          type="text"
+          id="motoModelo"
+          placeholder="Modelo (Ex: Honda Titan 160)"
+          required
+        />
+        <input
+          type="text"
+          id="motoPlaca"
+          placeholder="Placa (Ex: ABC1D23)"
+          required
+        />
+        <input type="text" id="motoCor" placeholder="Cor da Moto" required />
+        <button type="submit">Concluir e Ir para o Mapa</button>
+      </form>
+    </div>
+
+    <script>
+      // ✅ Altere para o IP exato:
+      const API = "http://127.0.0.1:3000";
+
+      // Alterna entre as abas de Login e Registro
+      function switchTab(type) {
+        document.getElementById("msg").style.display = "none";
+        if (type === "login") {
+          document.querySelectorAll(".tab")[0].classList.add("active");
+          document.querySelectorAll(".tab")[1].classList.remove("active");
+          document.getElementById("loginForm").classList.add("active");
+          document.getElementById("registerForm").classList.remove("active");
+          document.getElementById("veiculoForm").classList.remove("active");
+        } else {
+          document.querySelectorAll(".tab")[0].classList.remove("active");
+          document.querySelectorAll(".tab")[1].classList.add("active");
+          document.getElementById("loginForm").classList.remove("active");
+          document.getElementById("registerForm").classList.add("active");
+          document.getElementById("veiculoForm").classList.remove("active");
+        }
+      }
+
+      function showMsg(text, isError = true) {
+        const msgDiv = document.getElementById("msg");
+        msgDiv.innerText = text;
+        msgDiv.className = `message ${isError ? "error" : "success"}`;
+        msgDiv.style.display = "block";
+      }
+
+      // 1. FLUXO DE LOGIN (CORRIGIDO PARA EXIBIR FORMULÁRIO DA MOTO)
+      // 1. FLUXO DE LOGIN (VERIFICA SE JÁ POSSUI MOTO CADASTRADA)
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          document.getElementById("msg").style.display = "none";
+
+          const email = document.getElementById("loginEmail").value;
+          const password = document.getElementById("loginPassword").value;
+
+          try {
+            const res = await fetch(`${API}/products/auth/login`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
+
+            const dados = await res.json();
+
+            if (res.ok) {
+              showMsg("Verificando credenciais do veículo...", false);
+
+              // 🎯 NOVA VALIDAÇÃO: Verifica se o motoboy já tem veículo cadastrado
+              const veiculoRes = await fetch(`${API}/veiculos/veiculo`, {
+                method: "GET",
+                credentials: "include",
+              });
+
+              if (veiculoRes.ok) {
+                // Se o servidor respondeu 200 OK, a moto existe! Vai direto pro mapa
+                alert(
+                  "Login realizado com sucesso! Indo para o painel de entregas... 🛵💨",
+                );
+                window.location.href = "motoboy.html";
+              } else if (veiculoRes.status === 404) {
+                // Se retornou 404, o usuário está logado mas não tem moto. Abre o formulário!
+                document.getElementById("authTabs").style.display = "none";
+                document.getElementById("loginForm").classList.remove("active");
+                document.getElementById("veiculoForm").classList.add("active");
+                document.getElementById("main-title").innerText =
+                  "🏍️ Cadastre sua Moto";
+                document.getElementById("msg").style.display = "none"; // limpa o texto de carregamento
+              } else {
+                // Qualquer outro erro de sessão ou middleware
+                showMsg(
+                  "Erro ao validar sessão do veículo. Tente entrar novamente.",
+                );
+              }
+            } else {
+              showMsg(dados.error || "E-mail ou senha inválidos.");
+            }
+          } catch (err) {
+            console.error(err);
+            showMsg("Erro ao conectar com o servidor.");
+          }
+        });
+
+      // 2. FLUXO DE REGISTRO
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          document.getElementById("msg").style.display = "none";
+
+          const email = document.getElementById("regEmail").value;
+          const password = document.getElementById("regPassword").value;
+          const nome = document.getElementById("regNome").value;
+          const phone = document.getElementById("regPhone").value;
+          const documentNumber = document.getElementById("regDocument").value;
+
+          try {
+            const res = await fetch(`${API}/products/auth/registrar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email,
+                password,
+                role: "CUSTOMER",
+                customerData: {
+                  name: nome,
+                  phone: phone,
+                  document: documentNumber,
+                },
+              }),
+            });
+
+            const dados = await res.json();
+
+            if (res.ok) {
+              showMsg(
+                "Conta criada! Efetuando login para salvar dados da moto...",
+                false,
+              );
+
+              const loginRes = await fetch(`${API}/products/auth/login`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+              });
+
+              if (loginRes.ok) {
+                document.getElementById("authTabs").style.display = "none";
+                document
+                  .getElementById("registerForm")
+                  .classList.remove("active");
+                document.getElementById("veiculoForm").classList.add("active");
+                document.getElementById("main-title").innerText =
+                  "🏍️ Cadastre sua Moto";
+              } else {
+                showMsg(
+                  "Conta criada! Vá na aba de 'Entrar' para configurar seu veículo.",
+                );
+                switchTab("login");
+              }
+            } else {
+              showMsg(dados.error || "Erro ao realizar cadastro.");
+            }
+          } catch (err) {
+            showMsg("Erro de comunicação com o servidor.");
+          }
+        });
+
+      // 3. FLUXO DE CADASTRO DA MOTO (PÓS-LOGIN/REGISTRO)
+      document
+        .getElementById("veiculoForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          document.getElementById("msg").style.display = "none";
+
+          const modelo = document.getElementById("motoModelo").value;
+          const placa = document.getElementById("motoPlaca").value;
+          const cor = document.getElementById("motoCor").value;
+
+          try {
+            const res = await fetch(`${API}/veiculos/veiculo`, {
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ modelo, placa, cor }),
+            });
+
+            const dados = await res.json();
+
+            if (res.ok) {
+              alert("Tudo pronto! Bem-vindo à equipe de entregas. 🛵");
+              window.location.href = "motoboy.html";
+            } else {
+              // 🎯 Monta a mensagem detalhada vinda do servidor
+              const mensagemErro = dados.details
+                ? `Erro: ${dados.error}\nDetalhes: ${dados.details}`
+                : dados.error || dados.message || "Falha ao registrar veículo.";
+
+              console.error("[ERRO_SERVIDO_MOTO]:", dados);
+
+              // 🚨 Exibe o erro no ALERT nativo
+              alert(`⚠️ Ops! Algo deu errado:\n\n${mensagemErro}`);
+            }
+          } catch (err) {
+            console.error("[ERRO_CONEXAO_MOTO]:", err);
+            alert(`❌ Erro de conexão com o servidor:\n${err.message}`);
+          }
+        });
+    </script>
+  </body>
+</html>

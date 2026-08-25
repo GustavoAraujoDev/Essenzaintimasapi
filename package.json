@@ -1,0 +1,59 @@
+{
+  "name": "nodejs-sandbox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev": "nodemon index.js",    
+    "start": "node index.js",
+    "test": "jest --runInBand",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "jest tests/e2e",
+    "docs": "jsdoc -c jsdoc.json"
+  },
+  "keywords": [],
+  "author": "Ives van Hoorne",
+  "license": "MIT",
+  "devDependencies": {
+    "clean-jsdoc-theme": "^4.3.0",
+    "eslint": "9.15.0",
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^9.5.0",
+    "nodemon": "^3.1.7",
+    "supertest": "^7.1.4"
+  },
+  "dependencies": {
+    "@testcontainers/mongodb": "^11.10.0",
+    "bcrypt": "^6.0.0",
+    "body-parser": "1.20.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "docker": "^1.0.0",
+    "dotenv": "16.4.5",
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-network": "^3.0.0-alpha.5",
+    "escpos-usb": "^3.0.0-alpha.4",
+    "express": "4.21.1",
+    "fs": "^0.0.1-security",
+    "joi": "^18.0.2",
+    "jsdoc": "^4.0.5",
+    "jsonwebtoken": "^9.0.3",
+    "local-devices": "^4.0.0",
+    "mongoose": "8.8.1",
+    "net": "^1.0.2",
+    "node-thermal-printer": "^4.4.3",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "prom-client": "^15.1.3",
+    "sanitize-html": "^2.17.4",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

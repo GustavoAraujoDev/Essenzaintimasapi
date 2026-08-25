@@ -1,0 +1,7 @@
+<button
+  type="button"
+  onclick="openAvailableCouponsModal()"
+  class="text-xs text-[#ea1d2c] font-bold hover:text-[#d91a29] transition-colors flex items-center gap-1.5 bg-red-50/60 px-2.5 py-1.5 rounded-lg"
+>
+  <i class="fa-solid fa-gift text-sm"></i> Ver Cupons Disponíveis
+</button>

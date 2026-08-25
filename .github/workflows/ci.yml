@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-test:
+    name: Run Tests (Unit + Integration + E2E)
+    runs-on: ubuntu-latest
+
+    steps:
+      # ✔ Clona o repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ✔ Configura Node.js (versão recomendada para 2025)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # ✔ Instala dependências
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check Docker
+        run: |
+              docker --version
+              docker info
+
+      # ✔ Executa testes unitários, integração e E2E
+      - name: Run Tests
+        run: npm test
+
+      # ✔ Gera relatório de cobertura (pode integrar com SonarQube, CodeCov etc.)
+      - name: Run Coverage
+        run: npm test -- --coverage
+
+  # --------------------------------------
+  # DEPLOY AUTOMÁTICO (opcional)
+  # --------------------------------------
+
+  deploy:
+    name: Deploy to Production
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    # ❗ Só faz deploy se os testes PASSAREM
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      # Opção 1: Deploy para Railway
+      - name: Deploy to Railway
+        if: env.RAILWAY_TOKEN != ''
+        run: |
+          npm install -g railway
+          railway up --service backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # Opção 2: Deploy para Render (build + start)
+      - name: Deploy to Render
+        if: env.RENDER_API_KEY != ''
+        run: |
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+          -H "Accept: application/json" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+
+      # Opção 3: Deploy em VPS via SSH
+      - name: Deploy to VPS via SSH
+        if: env.SSH_PRIVATE_KEY != ''
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/seu-projeto
+            git pull origin main
+            npm install
+            pm2 restart all

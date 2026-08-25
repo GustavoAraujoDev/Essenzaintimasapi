@@ -1,0 +1,11 @@
+route:
+  receiver: "default"
+
+receivers:
+  - name: "default"
+    email_configs:
+      - to: "lindogustavo289@gmail.com"
+        from: "gustavobarrosaraujo10@gmail.com"
+        smarthost: "smtp.gmail.com:587"
+        auth_username: "gustavobarrosaraujo10@gmail.com"
+        auth_password: "eugy eirs hmor kcbj"

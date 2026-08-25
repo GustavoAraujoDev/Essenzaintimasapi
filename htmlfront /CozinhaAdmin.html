@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PratinhoPraTudo | KDS ULTRA PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Courier+Prime:wght@400;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .font-comanda {
+        font-family: "Courier Prime", monospace;
+      }
+      @keyframes pulse-critical {
+        0%,
+        100% {
+          background-color: #ea1d2c;
+          box-shadow: 0 0 0 0 rgba(234, 29, 44, 0.5);
+        }
+        50% {
+          background-color: #991b1b;
+          box-shadow: 0 0 15px 5px rgba(234, 29, 44, 0.2);
+        }
+      }
+      .animate-pulse-critical {
+        animation: pulse-critical 1.2s infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-800 flex flex-col">
+    <header
+      class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center flex-wrap gap-4"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-[#ea1d2c] flex items-center justify-center text-white text-xl shadow-sm"
+          >
+            <i class="fas fa-kitchen-set"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-black tracking-tight text-gray-900">
+              PratinhoPra<span class="text-[#ea1d2c]">Tudo</span>
+              <span
+                class="text-[10px] font-bold bg-gray-900 text-white px-2 py-0.5 rounded-md ml-1.5 uppercase"
+                >KDS ULTRA</span
+              >
+            </h1>
+            <p
+              class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mt-0.5"
+              id="clock-display"
+            >
+              Monitorando produção...
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div
+            id="controles-praca"
+            class="flex bg-gray-100 p-1 rounded-xl border border-gray-200 text-[11px] font-black"
+          >
+            <button
+              id="btn-praca-TODOS"
+              onclick="filtrarPraca('TODOS')"
+              class="px-3 py-1.5 rounded-lg bg-[#ea1d2c] text-white transition-all uppercase"
+            >
+              Todos
+            </button>
+            <button
+              id="btn-praca-COZINHA"
+              onclick="filtrarPraca('COZINHA')"
+              class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition-all uppercase"
+            >
+              Cozinha
+            </button>
+            <button
+              id="btn-praca-BEBIDAS"
+              onclick="filtrarPraca('BEBIDAS')"
+              class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition-all uppercase"
+            >
+              Bebidas
+            </button>
+          </div>
+          <button
+            onclick="abrirModalHistorico()"
+            class="bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs px-4 py-2 rounded-xl border border-gray-200 shadow-sm transition"
+          >
+            <i class="fas fa-history mr-1 text-gray-400"></i> Histórico
+          </button>
+          <div
+            id="connection-badge"
+            class="px-3 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-black border border-emerald-100 uppercase tracking-wider"
+          >
+            <i class="fas fa-circle text-[7px] mr-1"></i> Online
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main
+      class="max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1"
+    >
+      <aside class="lg:col-span-1">
+        <div
+          class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm sticky top-24"
+        >
+          <div
+            class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3"
+          >
+            <h3
+              class="text-[11px] font-black text-gray-400 uppercase tracking-widest"
+            >
+              Insumos Consolidados
+            </h3>
+            <span
+              id="badge-total-esteira"
+              class="text-[9px] bg-gray-100 text-gray-600 font-extrabold px-2 py-0.5 rounded border"
+              >0 ITENS</span
+            >
+          </div>
+          <div
+            id="lista-insumos-consolidados"
+            class="space-y-2 max-h-[calc(100vh-220px)] overflow-y-auto pr-1"
+          >
+            <p class="text-xs text-gray-400 text-center py-6">Esteira livre.</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="lg:col-span-3 space-y-6">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-amber-500 text-sm"
+              ><i class="fas fa-circle-notch animate-spin"></i
+            ></span>
+            <h2
+              class="text-sm font-black text-gray-900 uppercase tracking-wider"
+            >
+              Novos Pedidos
+            </h2>
+            <span
+              id="badge-novos"
+              class="bg-amber-50 text-amber-700 border border-amber-100 text-[10px] px-2 py-0.5 rounded-md font-bold"
+              >0</span
+            >
+          </div>
+          <div
+            id="col-novos"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          ></div>
+        </div>
+
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-[#ea1d2c] text-sm"
+              ><i class="fas fa-fire"></i
+            ></span>
+            <h2
+              class="text-sm font-black text-gray-900 uppercase tracking-wider"
+            >
+              Em Preparo
+            </h2>
+            <span
+              id="badge-preparo"
+              class="bg-red-50 text-[#ea1d2c] border border-red-100 text-[10px] px-2 py-0.5 rounded-md font-bold"
+              >0</span
+            >
+          </div>
+          <div
+            id="col-preparo"
+            class="grid grid-cols-1 md:grid-cols-2 gap-4"
+          ></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- MODAL HISTÓRICO -->
+    <div
+      id="modal-historico"
+      class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 backdrop-blur-xs"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-100 flex flex-col max-h-[85vh]"
+      >
+        <div
+          class="flex justify-between items-center border-b border-gray-100 pb-3 mb-4"
+        >
+          <h3 class="font-black text-sm uppercase text-gray-900">
+            Histórico Recente
+          </h3>
+          <button
+            onclick="fecharModalHistorico()"
+            class="text-gray-400 hover:text-gray-600"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div
+          id="lista-historico"
+          class="space-y-2 overflow-y-auto flex-1 pr-1"
+        ></div>
+      </div>
+    </div>
+
+    <!-- MODAL IMPRESSÃO / VISUALIZAÇÃO COMANDA -->
+    <div
+      id="modal-comanda"
+      class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 backdrop-blur-xs"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-100 flex flex-col"
+      >
+        <div
+          id="conteudo-comanda-papel"
+          class="font-comanda text-gray-900 bg-amber-50/40 border border-amber-100 p-4 rounded-xl shadow-inner overflow-y-auto max-h-[60vh]"
+        ></div>
+        <div class="mt-4 flex gap-2">
+          <button
+            onclick="window.print()"
+            class="w-full bg-gray-900 hover:bg-black text-white font-black py-2 rounded-xl text-xs uppercase tracking-wider transition"
+          >
+            Imprimir
+          </button>
+          <button
+            onclick="fecharModalComanda()"
+            class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-xl text-xs uppercase tracking-wider transition"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./cozinhaadminjs.js"></script>
+  </body>
+</html>

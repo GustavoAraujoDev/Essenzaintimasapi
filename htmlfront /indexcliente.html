@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PratinhoPratudo | Login e Cardápio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="./logopratinho.jpeg" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        transition: padding 0.3s;
+      }
+      .ifood-red {
+        color: #ea1d2c;
+      }
+      .bg-ifood-red {
+        background-color: #ea1d2c;
+      }
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Adicione isso ao seu bloco de <style> para suavizar as animações */
+      @keyframes bounce-subtle {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+      .animate-bounce-subtle {
+        animation: bounce-subtle 3s ease-in-out infinite;
+      }
+      .tracking-tightest {
+        letter-spacing: -0.05em;
+      }
+      @keyframes piscarInfinito {
+        0%,
+        100% {
+          border-color: transparent;
+          background-color: #f3f4f6; /* bg-gray-100 padrão */
+        }
+        50% {
+          border-color: #ea1d2c; /* Cor vermelha do iFood */
+          background-color: #fef2f2; /* Vermelho bem clarinho de fundo */
+        }
+      }
+
+      /* Esta classe fará o campo piscar direto */
+      .piscar-alerta-direto {
+        animation: piscarInfinito 1.8s ease-in-out infinite;
+      }
+      @keyframes pulse-red {
+        0%,
+        100% {
+          opacity: 1; /* Vermelho forte (totalmente visível) */
+        }
+        50% {
+          opacity: 0.35; /* Vermelho fraco (suave/transparente) */
+        }
+      }
+
+      .animate-pulse-red {
+        animation: pulse-red 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-white md:bg-gray-50 min-h-screen flex flex-col items-center">
+    <header
+      class="w-full max-w-2xl mx-auto mt-12 mb-10 flex flex-col items-center px-6"
+    >
+      <div class="relative mb-6">
+        <div
+          class="absolute -inset-4 bg-gradient-to-tr from-red-500/10 to-orange-500/5 rounded-full blur-2xl"
+        ></div>
+
+        <div
+          class="relative w-28 h-28 bg-white p-1 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center overflow-hidden transition-all duration-500 hover:shadow-[0_25px_60px_rgba(234,29,44,0.15)] hover:-translate-y-1"
+        >
+          <img
+            src="./logopratinho.jpeg"
+            alt="PratinhoPraTudo Parceiros"
+            class="w-full h-full object-cover rounded-[2.2rem]"
+          />
+        </div>
+
+        <div
+          id="status-badge"
+          class="absolute -bottom-2 right-0 bg-white shadow-md border border-gray-50 rounded-2xl px-3 py-1 flex items-center gap-1.5 animate-bounce-subtle"
+        >
+          <span class="flex h-2 w-2">
+            <span
+              id="status-ping"
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+            ></span>
+            <span
+              id="status-dot"
+              class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
+            ></span>
+          </span>
+          <span
+            id="status-text"
+            class="text-[9px] font-black text-gray-700 tracking-tighter uppercase"
+            >Online</span
+          >
+        </div>
+      </div>
+
+      <div class="text-center space-y-1.5">
+        <h1 class="text-4xl font-[800] text-gray-900 tracking-tightest">
+          PratinhoPra<span class="text-[#ea1d2c]">Tudo</span>
+        </h1>
+
+        <div
+          id="company-badge"
+          class="inline-flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-full border border-gray-100"
+        >
+          <div class="flex gap-1">
+            <span class="w-1 h-1 bg-gray-300 rounded-full animate-pulse"></span>
+            <span
+              class="w-1 h-1 bg-gray-400 rounded-full animate-pulse delay-75"
+            ></span>
+            <span
+              class="w-1 h-1 bg-gray-300 rounded-full animate-pulse delay-150"
+            ></span>
+          </div>
+          <span
+            class="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400"
+          >
+            Sincronizando loja
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <main
+      id="main-content"
+      class="w-full max-w-md bg-white md:border md:border-gray-200 md:rounded-2xl md:shadow-sm p-8 transition-all mb-20"
+    >
+      <section id="auth-section" class="hidden">
+        <div id="auth-title" class="text-center mb-8">
+          <h2 class="text-2xl font-bold text-gray-800">
+            Falta pouco para matar sua fome!
+          </h2>
+          <p class="text-gray-500 text-sm mt-2" id="store-name-text">
+            Carregando loja...
+          </p>
+        </div>
+
+        <form id="auth-form" class="space-y-4">
+          <div id="group-name" class="hidden">
+            <label
+              class="block text-[10px] font-bold text-gray-400 uppercase mb-1"
+              >Nome Completo</label
+            >
+            <input
+              type="text"
+              id="name"
+              class="w-full p-3 border rounded-xl outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="Seu nome"
+            />
+          </div>
+
+          <div id="group-phone" class="hidden">
+            <label
+              class="block text-[10px] font-bold text-gray-400 uppercase mb-1"
+              >WhatsApp</label
+            >
+            <input
+              type="tel"
+              id="phone"
+              class="w-full p-3 border rounded-xl outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="88999999999"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-bold text-gray-400 uppercase mb-1"
+              >E-mail</label
+            >
+            <input
+              type="email"
+              id="email"
+              required
+              class="w-full p-3 border rounded-xl outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="seu@email.com"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-[10px] font-bold text-gray-400 uppercase mb-1"
+              >Senha</label
+            >
+            <input
+              type="password"
+              id="password"
+              required
+              class="w-full p-3 border rounded-xl outline-none focus:ring-1 focus:ring-red-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="btn-submit"
+            class="w-full bg-ifood-red text-white font-bold py-4 rounded-xl shadow-lg mt-4"
+          >
+            Continuar
+          </button>
+        </form>
+
+        <div class="text-center mt-6">
+          <p class="text-sm text-gray-500">
+            <span id="toggle-text">Não possui conta?</span>
+            <button id="toggle-auth" class="text-red-600 font-bold ml-1">
+              Criar conta
+            </button>
+          </p>
+        </div>
+      </section>
+
+      <div id="menu-section" class="max-w-2xl mx-auto px-4 py-6">
+        <!-- Título com estilo iFood -->
+        <div class="flex justify-between items-center mb-8">
+          <h2
+            class="text-xl font-bold text-gray-900 border-b-4 border-[#ea1d2c] pb-1"
+          >
+            Cardápio
+          </h2>
+          <div class="text-[#ea1d2c]">
+            <i class="fas fa-motorcycle"></i>
+            <span class="text-xs font-bold ml-1">30-45 min</span>
+          </div>
+        </div>
+
+        <div
+          class="sticky top-0 bg-white z-40 mb-8 py-3 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-3 border-b border-gray-100"
+          id="categories-nav"
+        ></div>
+
+        <!-- Container de Categorias -->
+        <div id="categories-container" class="space-y-12">
+          <!-- Estado de Loading Refinado -->
+          <div
+            class="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200"
+          >
+            <div class="relative mb-4">
+              <!-- Ícone de prato pulsando -->
+              <div class="text-4xl animate-bounce">🍽️</div>
+              <div class="absolute -bottom-1 -right-1">
+                <span class="flex h-3 w-3">
+                  <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+                  ></span>
+                  <span
+                    class="relative inline-flex rounded-full h-3 w-3 bg-red-500"
+                  ></span>
+                </span>
+              </div>
+            </div>
+            <p class="text-gray-600 font-bold tracking-tight">
+              Buscando os melhores produtos...
+            </p>
+            <p class="text-gray-400 text-xs mt-1">
+              Carregando cardápio atualizado
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="details-section" class="hidden">
+        <button
+          onclick="switchTab('menu')"
+          class="text-sm font-semibold text-white bg-red-500 mb-6 flex items-center gap-2 p-2 rounded transition-colors hover:bg-red-600"
+        >
+          ← Voltar
+        </button>
+        <div id="product-details-content"></div>
+        <div class="mt-8 border-t pt-6">
+          <button
+            id="btn-add-cart"
+            class="w-full bg-ifood-red text-white font-bold py-4 rounded-lg shadow-lg flex justify-between px-6"
+          >
+            <span>Adicionar ao carrinho</span>
+            <span id="detail-total-price">R$ 0,00</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="cart-section" class="hidden max-w-2xl mx-auto px-4 pb-32">
+        <h2
+          class="text-2xl font-extrabold text-gray-900 mb-8 mt-4 tracking-tight"
+        >
+          Meu Carrinho
+        </h2>
+
+        <!-- Lista de Produtos -->
+        <div id="cart-items" class="space-y-4 mb-10">
+          <!-- Os itens entram aqui com estilo de card branco e bordas finas -->
+        </div>
+
+        <div id="cart-summary" class="hidden space-y-8 animate-fadeIn">
+          <!-- Seção: Identificação -->
+          <section
+            class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4"
+          >
+            <h3
+              class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"
+            >
+              <i class="fas fa-user-circle text-lg text-gray-300"></i> Seus
+              Dados
+            </h3>
+            <div class="grid grid-cols-1 gap-3">
+              <input
+                type="text"
+                id="client-name"
+                placeholder="Nome completo"
+                class="w-full px-4 py-3 border-2 rounded-xl focus:bg-white focus:border-[#ea1d2c] focus:ring-0 outline-none transition-all text-sm piscar-alerta-direto"
+                oninput="controlarPiscaPisca(this)"
+              />
+
+              <input
+                type="tel"
+                id="client-phone"
+                placeholder="WhatsApp (ex: 88 99999-9999)"
+                class="w-full px-4 py-3 border-2 rounded-xl focus:bg-white focus:border-[#ea1d2c] focus:ring-0 outline-none transition-all text-sm piscar-alerta-direto"
+                oninput="controlarPiscaPisca(this)"
+              />
+            </div>
+          </section>
+
+          <!-- Seção: Entrega -->
+          <section
+            class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4"
+          >
+            <h3
+              class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"
+            >
+              <i class="fas fa-map-marker-alt text-lg text-red-500"></i> Entrega
+            </h3>
+
+            <div class="flex flex-col gap-2 p-2 bg-gray-100 rounded-xl">
+              <label
+                for="order-type"
+                class="text-xs font-bold text-gray-500 px-1"
+              >
+                Tipo de Pedido
+              </label>
+
+              <select
+                id="order-type"
+                onchange="toggleAddressField()"
+                class="w-full py-2 px-3 text-sm font-bold rounded-lg bg-white shadow-sm text-gray-800 border-none focus:ring-2 focus:ring-gray-300 outline-none appearance-none"
+              >
+                <option value="DELIVERY">Delivery</option>
+                <option value="PICKUP">Retirada</option>
+              </select>
+            </div>
+
+            <div id="order-address-container" class="space-y-3">
+              <div class="relative">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                  📍 Endereço de Entrega
+                </label>
+                <input
+                  type="text"
+                  id="order-address"
+                  placeholder="Ex: Av. Beira Mar, 1234"
+                  title="Digite o nome da rua/avenida e o número, separados por vírgula"
+                  class="w-full px-4 py-3 border-2 rounded-xl focus:bg-white focus:border-[#ea1d2c] outline-none transition-all text-sm piscar-alerta-direto"
+                  oninput="controlarPiscaPisca(this)"
+                />
+                <p class="text-[11px] text-gray-400 mt-1 ml-1">
+                  Digite apenas a
+                  <span class="font-semibold">Rua/Av e o Número</span>. O bairro
+                  será adicionado ao selecionar a lista.
+                </p>
+                <div class="flex flex-col gap-2 p-2 bg-gray-100 rounded-xl">
+                  <label
+                    for="address-neighborhood"
+                    class="text-xs font-bold text-gray-500 px-1"
+                  >
+                    Ou selecione o Bairro (Taxa Fixa)
+                  </label>
+                  <select
+                    id="address-neighborhood"
+                    onchange="selecionarTaxaPorBairro()"
+                    class="w-full py-2 px-3 text-sm font-bold rounded-lg bg-white shadow-sm text-gray-800 border-none focus:ring-2 focus:ring-gray-300 outline-none appearance-none"
+                  ></select>
+                </div>
+              </div>
+              <p
+                id="delivery-info"
+                class="text-[11px] font-bold text-emerald-600 flex items-center gap-1 h-4"
+              ></p>
+            </div>
+          </section>
+
+          <!-- Seção: Pagamento -->
+          <section
+            class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4"
+          >
+            <h3
+              class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"
+            >
+              <i class="fas fa-credit-card text-lg text-gray-300"></i> Pagamento
+            </h3>
+            <select
+              id="payment-method"
+              class="w-full px-4 py-3 bg-gray-50 border-transparent border-2 rounded-xl focus:bg-white focus:border-[#ea1d2c] outline-none transition-all text-sm appearance-none"
+            >
+              <option value="PIX">Pix (Pagamento Instantâneo)</option>
+              <option value="CARTAO_CREDITO">
+                Cartão de Crédito(Acréscimo de R$ 1,00)
+              </option>
+              <option value="CARTAO_DEBITO">
+                Cartão de Débito(Acréscimo de R$ 1,00)
+              </option>
+              <option value="DINHEIRO">Dinheiro / Na Entrega</option>
+            </select>
+            <div id="change-container" class="hidden space-y-2 animate-fade-in">
+              <label
+                for="change-amount"
+                class="text-xs font-bold text-gray-500 uppercase tracking-wider"
+              >
+                Precisa de troco para quanto?
+              </label>
+              <input
+                type="number"
+                id="change-amount"
+                placeholder="Ex: 50,00"
+                step="0.01"
+                class="w-full px-4 py-3 bg-gray-50 border-transparent border-2 rounded-xl focus:bg-white focus:border-[#ea1d2c] outline-none transition-all text-sm"
+              />
+            </div>
+          </section>
+
+          <section
+            class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4"
+          >
+            <div class="flex justify-between items-center">
+              <h3
+                class="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"
+              >
+                <i class="fas fa-ticket-alt text-lg text-gray-300"></i> Cupom de
+                Desconto
+              </h3>
+            </div>
+
+            <div class="flex gap-2 relative">
+              <div class="relative flex-1">
+                <input
+                  type="text"
+                  id="coupon-code"
+                  placeholder="Digite ou selecione um cupom"
+                  class="w-full pl-4 pr-10 py-3 uppercase bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-[#ea1d2c] outline-none transition-all text-sm font-semibold tracking-wide"
+                />
+                <span
+                  id="coupon-success-icon"
+                  class="absolute inset-y-0 right-3 hidden flex items-center text-emerald-500 animate-scaleIn"
+                >
+                  <i class="fas fa-check-circle text-base"></i>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                id="btn-apply-coupon"
+                onclick="validateCoupon()"
+                class="bg-gray-900 hover:bg-black text-white text-xs font-bold px-5 rounded-xl transition-all active:scale-95 shadow-sm"
+              >
+                Aplicar
+              </button>
+
+              <button
+                type="button"
+                id="btn-remove-coupon"
+                onclick="removeCoupon()"
+                class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-5 rounded-xl transition-all active:scale-95 border border-red-100 hidden"
+              >
+                Remover
+              </button>
+            </div>
+            <p
+              id="coupon-message"
+              class="text-xs font-bold hidden px-1 transition-all"
+            ></p>
+          </section>
+
+          <!-- Resumo de Valores -->
+          <div class="bg-gray-50 p-6 rounded-3xl space-y-3">
+            <div class="flex justify-between text-sm text-gray-600">
+              <span>Subtotal</span>
+              <span id="cart-subtotal" class="font-medium">R$ 0,00</span>
+            </div>
+
+            <div
+              id="row-discount"
+              class="hidden flex justify-between text-sm text-gray-600 animate-fadeIn"
+            >
+              <span class="flex items-center gap-1">
+                <i class="fas fa-ticket-alt text-emerald-500 text-xs"></i> Cupom
+                aplicado
+              </span>
+              <span id="cart-discount" class="text-emerald-600 font-bold">
+                - R$ 0,00
+              </span>
+            </div>
+
+            <div class="flex justify-between text-sm text-gray-600">
+              <span>Taxa de entrega</span>
+              <span id="cart-shipping" class="text-emerald-600 font-bold"
+                >R$ 0,00</span
+              >
+            </div>
+            <div
+              id="card-fee-container"
+              class="hidden flex justify-between text-sm text-gray-600"
+            >
+              <span>Taxa do Cartão</span>
+              <span id="cart-card-fee" class="text-amber-600 font-bold"
+                >R$ 1,00</span
+              >
+            </div>
+            <div
+              class="flex justify-between text-xl font-black text-gray-900 pt-3 border-t border-gray-200"
+            >
+              <span>Total</span>
+              <span id="cart-total" class="text-[#ea1d2c]">R$ 0,00</span>
+            </div>
+
+            <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="check-termos"
+                  required
+                  class="mt-1 h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500 transition-all"
+                />
+                <span class="text-xs text-gray-600 leading-normal">
+                  Li e concordo com os
+                  <button
+                    type="button"
+                    onclick="openLegalModal('termos')"
+                    class="text-red-600 underline font-semibold hover:text-red-700"
+                  >
+                    Termos de Uso
+                  </button>
+                  e a
+                  <button
+                    type="button"
+                    onclick="openLegalModal('privacidade')"
+                    class="text-red-600 underline font-semibold hover:text-red-700"
+                  >
+                    Política de Privacidade</button
+                  >.
+                </span>
+              </label>
+            </div>
+
+            <button
+              onclick="processCheckout()"
+              class="w-full bg-[#ea1d2c] text-white font-bold py-4 rounded-2xl mt-6 shadow-lg shadow-red-200 hover:bg-[#d91a29] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+            >
+              <span>Finalizar Pedido</span>
+              <i class="fas fa-chevron-right text-sm opacity-70"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="orders-section" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Meus Pedidos</h2>
+
+        <div class="flex gap-2 mb-8">
+          <input
+            type="text"
+            id="search-phone"
+            placeholder="Digite o telefone"
+            class="flex-1 p-3 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-red-500"
+          />
+          <button
+            onclick="fetchOrdersByPhone()"
+            class="bg-gray-800 text-white px-4 rounded-lg text-sm font-bold"
+          >
+            Buscar
+          </button>
+        </div>
+
+        <div id="orders-list" class="space-y-4">
+          <p class="text-center text-gray-400 py-10">
+            Use a busca acima ou clique para carregar.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <footer
+      class="w-full bg-white border-t border-gray-100 pt-10 pb-28 mt-auto"
+    >
+      <div class="max-w-md mx-auto px-6">
+        <div class="flex flex-col items-center text-center">
+          <div class="grayscale opacity-50 mb-6">
+            <img
+              src="./logopratinho.jpeg"
+              alt="Pratinhopratudo"
+              class="h-8 w-auto rounded-lg"
+            />
+          </div>
+
+          <nav
+            class="flex gap-6 mb-8 text-xs font-semibold text-gray-400 uppercase tracking-widest"
+          >
+            <button
+              onclick="openLegalModal('termos')"
+              class="hover:text-red-600 transition-colors uppercase"
+            >
+              Termos
+            </button>
+            <button
+              onclick="openLegalModal('privacidade')"
+              class="hover:text-red-600 transition-colors uppercase"
+            >
+              Privacidade
+            </button>
+            <a href="#" class="hover:text-red-600 transition-colors uppercase"
+              >Ajuda</a
+            >
+          </nav>
+
+          <div class="space-y-2">
+            <p class="text-sm text-gray-500">
+              © 2026
+              <span class="font-bold text-gray-800">PratinhoPraTudo</span>.
+              Todos os direitos reservados.
+            </p>
+            <p class="text-[10px]">
+              CNPJ: 57.678.701/0001-00 | Rua Joaquim José da Silva, 1006, Vila
+              Velha
+            </p>
+            <div
+              class="flex items-center justify-center gap-2 text-xs text-gray-400"
+            >
+              <span>Desenvolvido com</span>
+              <i class="fas fa-heart text-red-500 animate-pulse"></i>
+              <span>por</span>
+              <a
+                href="https://wa.me/5588999935987?text=Olá%20Gustavo,%20gostaria%20de%20solicitar%20um%20orçamento!"
+                target="_blank"
+                class="font-bold text-gray-600 hover:text-red-600 transition-all underline underline-offset-4"
+              >
+                Gustavo Araújo
+              </a>
+            </div>
+          </div>
+
+          <div class="mt-8 flex justify-center gap-4 opacity-30 grayscale">
+            <i class="fab fa-cc-visa text-2xl"></i>
+            <i class="fab fa-cc-mastercard text-2xl"></i>
+            <i class="fab fa-pix text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div
+      id="legalModal"
+      class="fixed inset-0 z-[100] hidden items-center justify-center p-4"
+    >
+      <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onclick="closeLegalModal()"
+      ></div>
+
+      <div
+        class="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-200"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50"
+        >
+          <h2
+            id="modalTitle"
+            class="text-lg font-bold text-gray-800 uppercase tracking-tight text-red-600"
+          >
+            Título
+          </h2>
+          <button
+            onclick="closeLegalModal()"
+            class="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 text-xl"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div
+          id="modalContent"
+          class="p-6 overflow-y-auto text-sm text-gray-600 leading-relaxed space-y-4"
+        ></div>
+
+        <div class="p-4 border-t border-gray-100 bg-white">
+          <button
+            onclick="closeLegalModal()"
+            class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors uppercase tracking-widest text-xs"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <nav
+      id="bottom-nav"
+      class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center py-3 shadow-lg z-50"
+    >
+      <button
+        onclick="switchTab('menu')"
+        class="flex flex-col items-center text-gray-400 focus:text-red-600"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+          />
+        </svg>
+        <span class="text-[10px]">Início</span>
+      </button>
+      <button
+        onclick="switchTab('cart')"
+        class="flex flex-col items-center text-gray-400 focus:text-red-600 relative"
+      >
+        <div
+          id="cart-badge"
+          class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold"
+        >
+          0
+        </div>
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+          />
+        </svg>
+        <span class="text-[10px]">Carrinho</span>
+      </button>
+      <button
+        onclick="switchTab('orders')"
+        class="flex flex-col items-center text-gray-400 focus:text-red-600"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
+        </svg>
+        <span class="text-[10px]">Consultar Seus Pedidos</span>
+      </button>
+    </nav>
+
+    <div
+      id="modal-available-coupons"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300"
+    >
+      <div
+        class="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col max-h-[80vh] transform scale-95 transition-transform duration-300 animate-modalPop"
+      >
+        <header
+          class="bg-white p-4 border-b border-gray-100 flex justify-between items-center px-5"
+        >
+          <div class="flex items-center gap-2.5">
+            <div
+              class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-[#ea1d2c]"
+            >
+              <i class="fa-solid fa-tags text-sm"></i>
+            </div>
+            <div>
+              <h3
+                class="font-bold text-gray-800 text-sm uppercase tracking-wider"
+              >
+                Cupons para você
+              </h3>
+              <p class="text-[10px] text-gray-400 font-medium">
+                Selecione o melhor desconto para sua compra
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onclick="closeAvailableCouponsModal()"
+            class="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+          >
+            <i class="fas fa-times text-base"></i>
+          </button>
+        </header>
+
+        <div
+          id="available-coupons-list"
+          class="p-5 space-y-4 overflow-y-auto flex-1 bg-gray-50/50"
+        ></div>
+
+        <footer
+          class="p-3 bg-white border-t border-gray-100 text-center text-[10px] text-gray-400 font-medium"
+        >
+          Os cupons não são cumulativos com outras promoções ativas.
+        </footer>
+      </div>
+    </div>
+
+    <script src="./indexcliente.js"></script>
+  </body>
+</html>

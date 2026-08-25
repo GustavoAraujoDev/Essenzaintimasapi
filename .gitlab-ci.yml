@@ -1,0 +1,86 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+
+# --------------------------------------
+# BUILD + TEST
+# --------------------------------------
+build-and-test:
+  stage: test
+  image: node:20
+
+  services:
+    - docker:dind
+
+  before_script:
+    - apt-get update && apt-get install -y docker.io
+    - node -v
+    - npm -v
+
+  script:
+    # ✔ Instala dependências
+    - npm install
+
+    # ✔ Verifica Docker
+    - docker --version
+    - docker info
+
+    # ✔ Executa testes
+    - npm test
+
+    # ✔ Coverage
+    - npm test -- --coverage
+
+  only:
+    - main
+    - master
+    - merge_requests
+
+# --------------------------------------
+# DEPLOY
+# --------------------------------------
+deploy:
+  stage: deploy
+  image: node:20
+  needs:
+    - build-and-test
+
+  script:
+    - npm install
+
+    # 🚀 Deploy Railway
+    - |
+      if [ ! -z "$RAILWAY_TOKEN" ]; then
+        npm install -g railway
+        railway up --service backend
+      fi
+
+    # 🚀 Deploy Render
+    - |
+      if [ ! -z "$RENDER_API_KEY" ]; then
+        curl -X POST "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+        -H "Accept: application/json" \
+        -H "Authorization: Bearer $RENDER_API_KEY"
+      fi
+
+    # 🚀 Deploy VPS via SSH
+    - |
+      if [ ! -z "$SSH_PRIVATE_KEY" ]; then
+        apt-get update && apt-get install -y openssh-client
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST "
+          cd /var/www/seu-projeto &&
+          git pull origin main &&
+          npm install &&
+          pm2 restart all
+        "
+      fi
+
+  only:
+    - main

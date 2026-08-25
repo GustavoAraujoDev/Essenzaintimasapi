@@ -1,0 +1,106 @@
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: api_node
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    environment:
+      NODE_ENV: development
+      MONGO_URI: mongodb://ferretdb:27017/meu_banco
+
+    restart: unless-stopped
+
+    depends_on:
+      - ferretdb
+
+
+
+  postgres:
+
+    image: ghcr.io/ferretdb/postgres-documentdb:16
+
+    container_name: ferretdb-postgres
+
+    environment:
+      POSTGRES_USER: ferretdb
+      POSTGRES_PASSWORD: ferretdb
+      POSTGRES_DB: postgres
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+
+
+  ferretdb:
+
+    image: ghcr.io/ferretdb/ferretdb:latest
+
+    container_name: ferretdb
+
+    restart: always
+
+    ports:
+      - "27017:27017"
+
+    environment:
+      FERRETDB_HANDLER: postgresql
+      FERRETDB_POSTGRESQL_URL: "postgres://ferretdb:ferretdb@ferretdb-postgres:5432/postgres?sslmode=disable"
+
+    depends_on:
+      postgres:
+        condition: service_started
+
+
+
+  prometheus:
+
+    image: prom/prometheus
+
+    container_name: prometheus
+
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml
+
+    ports:
+      - "9090:9090"
+
+
+
+  grafana:
+
+    image: grafana/grafana
+
+    container_name: grafana
+
+    ports:
+      - "3001:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+
+
+volumes:
+
+  grafana_data:
+
+  postgres_data:

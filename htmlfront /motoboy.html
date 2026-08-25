@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel do Motoboy - Entregas</title>
+
+    <script src="https://unpkg.com/maplibre-gl@^4.0.0/dist/maplibre-gl.js"></script>
+    <link
+      href="https://unpkg.com/maplibre-gl@^4.0.0/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .bg-ifood-red {
+        background-color: #ea1d2c;
+      }
+      .text-ifood-red {
+        color: #ea1d2c;
+      }
+      .border-ifood-red {
+        border-color: #ea1d2c;
+      }
+      /* Ajuste fino para os popups nativos do mapa 3D combinarem com a interface */
+      .maplibregl-popup-content {
+        border-radius: 12px !important;
+        padding: 8px 12px !important;
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-50 min-h-screen text-gray-800">
+    <header
+      class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm"
+    >
+      <div
+        class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center bg-red-50 text-ifood-red"
+          >
+            <i class="fa-solid fa-motorcycle text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-black tracking-tight">
+              PratinhoPra<span class="text-ifood-red">Tudo</span>
+              <span
+                class="text-xs font-bold bg-red-100 text-ifood-red px-2 py-0.5 rounded-md ml-1"
+                >MOTOBOY</span
+              >
+            </h1>
+            <p
+              class="text-[10px] text-gray-400 uppercase font-bold tracking-wider"
+            >
+              Módulo de Entregas e Rotas
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            id="btn-status-motoboy"
+            onclick="alternarDisponibilidade()"
+            class="text-xs font-bold bg-emerald-500 text-white px-3 py-2 rounded-xl border border-emerald-600 transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <i class="fa-solid fa-circle text-[9px] animate-pulse"></i>
+            <span>Estou Ativo</span>
+          </button>
+          <div
+            class="text-sm font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 flex items-center gap-1.5"
+          >
+            <span
+              class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+            ></span>
+            GPS Ativo
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <section id="secao-cabecalho" class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-black text-gray-900 tracking-tight uppercase">
+            <i class="fa-solid fa-user-circle text-ifood-red mr-1"></i> Perfil
+            do Entregador
+          </h2>
+          <button
+            onclick="fazerLogout()"
+            class="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl border border-red-200 transition-all flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair do App
+          </button>
+        </div>
+
+        <div
+          class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          id="dados-motoboy"
+        >
+          <div class="p-2">
+            <span
+              class="text-xs font-bold text-gray-400 uppercase tracking-wider block"
+              >Nome do Piloto</span
+            >
+            <h3
+              id="moto-nome"
+              class="text-base font-black text-gray-900 mt-1 truncate"
+            >
+              Carregando...
+            </h3>
+          </div>
+          <div class="p-2">
+            <span
+              class="text-xs font-bold text-gray-400 uppercase tracking-wider block"
+              >E-mail</span
+            >
+            <h3
+              id="moto-email"
+              class="text-base font-black text-gray-900 mt-1 truncate"
+            >
+              Carregando...
+            </h3>
+          </div>
+          <div class="p-2">
+            <span
+              class="text-xs font-bold text-gray-400 uppercase tracking-wider block"
+              >Veículo</span
+            >
+            <h3
+              id="moto-veiculo"
+              class="text-base font-black text-gray-900 mt-1 truncate"
+            >
+              Carregando...
+            </h3>
+          </div>
+          <div class="p-2">
+            <span
+              class="text-xs font-bold text-gray-400 uppercase tracking-wider block"
+              >Placa</span
+            >
+            <h3
+              id="moto-placa"
+              class="text-base font-black text-gray-900 mt-1 truncate"
+            >
+              Carregando...
+            </h3>
+          </div>
+        </div>
+      </section>
+
+      <div
+        class="flex items-center gap-1.5 bg-gray-200/70 p-1.5 rounded-2xl w-full sm:w-80 text-sm font-bold text-gray-600 mb-6"
+        id="abas-navegacao"
+      >
+        <button
+          onclick="mudarAba('mapa')"
+          id="tab-mapa"
+          class="tab-btn px-4 py-2.5 rounded-xl bg-white shadow-sm text-gray-900 transition-all flex-1 text-center"
+        >
+          🗺️ Mapa
+        </button>
+        <button
+          onclick="mudarAba('historico')"
+          id="tab-historico"
+          class="tab-btn px-4 py-2.5 rounded-xl hover:bg-white/50 transition-all flex-1 text-center"
+        >
+          📜 Histórico
+        </button>
+      </div>
+
+      <div id="aba-conteudo-mapa" class="space-y-6">
+        <div>
+          <h2
+            id="titulo-pagina"
+            class="text-2xl font-black text-gray-900 tracking-tight"
+          >
+            🛵 Entregas Disponíveis (Prontos)
+          </h2>
+          <p class="text-sm text-gray-500">
+            Aceite corridas em tempo real ou visualize as rotas antes de sair.
+          </p>
+        </div>
+
+        <div
+          id="waze-top-panel"
+          class="hidden bg-blue-600 text-white p-4 rounded-2xl shadow-md flex items-center gap-3 transition-all duration-300"
+        >
+          <div
+            class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl"
+          >
+            <i class="fa-solid fa-diamond-turn-right animate-pulse"></i>
+          </div>
+          <div>
+            <span
+              class="text-[10px] font-bold uppercase tracking-wider text-blue-200 block"
+              >Próxima Instrução</span
+            >
+            <h3 id="waze-proxima-rua" class="text-sm font-black">
+              Calculando melhor trajeto...
+            </h3>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div
+            id="lista"
+            class="flex flex-col gap-4 lg:col-span-1 max-h-[500px] overflow-y-auto pr-1"
+          >
+            <div
+              class="bg-white p-6 rounded-2xl border border-gray-200 text-center text-gray-400 font-medium shadow-sm"
+            >
+              <i
+                class="fa-solid fa-spinner animate-spin text-xl text-ifood-red mb-2 block"
+              ></i>
+              Buscando pedidos no servidor...
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 relative">
+            <div
+              id="map"
+              class="w-full h-[500px] rounded-2xl border border-gray-200 shadow-sm bg-gray-100 overflow-hidden"
+            ></div>
+
+            <button
+              onclick="recentralizarCameraWaze()"
+              id="waze-bottom-panel"
+              class="hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black hover:bg-gray-900 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 transition-all active:scale-95 z-10"
+            >
+              <i class="fa-solid fa-location-crosshairs"></i> Recentralizar
+              Câmera
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="aba-conteudo-historico" class="hidden space-y-6">
+        <div>
+          <h2 class="text-2xl font-black text-gray-900 tracking-tight">
+            📜 Histórico de Corridas Concluídas
+          </h2>
+          <p class="text-sm text-gray-500">
+            Monitore seu desempenho operacional e fechamento de ganhos diários.
+          </p>
+        </div>
+
+        <div
+          class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between"
+        >
+          <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            <div class="relative w-full sm:w-64">
+              <i
+                class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400 text-sm"
+              ></i>
+              <input
+                id="search-historico"
+                type="text"
+                onkeyup="filtrarHistorico()"
+                placeholder="Buscar cliente..."
+                class="w-full pl-10 pr-4 py-2.5 border-2 border-gray-100 rounded-xl outline-none focus:border-ifood-red transition-all text-sm"
+              />
+            </div>
+
+            <div class="w-full sm:w-48">
+              <select
+                id="filter-periodo"
+                onchange="filtrarHistorico()"
+                class="w-full px-4 py-2.5 border-2 border-gray-100 bg-white rounded-xl outline-none focus:border-ifood-red transition-all text-sm font-semibold text-gray-600 appearance-none"
+              >
+                <option value="todos">Todo o Histórico</option>
+                <option value="hoje">Hoje</option>
+              </select>
+            </div>
+          </div>
+
+          <div
+            class="bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3 text-emerald-800 font-bold text-sm flex items-center gap-3 w-full md:w-auto justify-between md:justify-start"
+          >
+            <div class="flex items-center gap-2">
+              <i
+                class="fa-solid fa-hand-holding-dollar text-emerald-600 text-base"
+              ></i>
+              <span>Faturamento Total:</span>
+            </div>
+            <span
+              id="valor-total-acumulado"
+              class="text-xl font-black text-emerald-900"
+              >R$ 0,00</span
+            >
+          </div>
+        </div>
+
+        <div
+          id="lista-historico"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          <div
+            class="bg-white p-6 rounded-2xl border border-gray-200 text-center text-gray-400 font-medium shadow-sm col-span-full"
+          >
+            Carregando histórico...
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Resto dos scripts herdados do sistema -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+      const API = "http://127.0.0.1:3000";
+
+      // 🗺️ CONFIGURAÇÃO DO MAPA 3D ESTILO WAZE (MapLibre GL JS)
+      // Nota: Certifique-se de incluir as tags CSS e JS do maplibre-gl no seu HTML principal
+      let mapa = new maplibregl.Map({
+        container: "map",
+        style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json", // Estilo vetorizado Premium
+        center: [-38.526, -3.731], // Padrão Mapbox/MapLibre: [Longitude, Latitude]
+        zoom: 13,
+        pitch: 60, // 📐 Inclinação da câmera estilo Waze (Efeito 3D)
+        bearing: 0, // Rotação inicial da bússola
+        antialias: true,
+      });
+
+      // Adiciona o controle de navegação (Zoom e Bússola) no canto inferior direito
+      mapa.addControl(
+        new maplibregl.NavigationControl({ showCompass: true }),
+        "bottom-right",
+      );
+
+      let motoMarker = null;
+      let clienteMarker = null;
+      let controleRota = null;
+      let minhaPosicao = null;
+      let cacheTodosPedidos = [];
+      let idMotoboyLogado = null;
+      let motoboyDisponivel = true;
+
+      let pedidoAtivoId = localStorage.getItem("pedidoAtivoId") || null;
+      let destinoAtivo = localStorage.getItem("destinoAtivo")
+        ? JSON.parse(localStorage.getItem("destinoAtivo"))
+        : null;
+
+      // 🎨 COMPONENTE DE ÍCONES CUSTOMIZADOS ESTILO APP PREMIUM (Tailwind)
+      const criarElementoIcone = (classeIcone, corFundo) => {
+        const container = document.createElement("div");
+        container.className =
+          "relative flex flex-col items-center justify-center";
+        container.innerHTML = `
+    <div class="flex items-center justify-center w-10 h-10 ${corFundo} rounded-full border-2 border-white shadow-lg transform transition-transform duration-300 hover:scale-110">
+      <i class="${classeIcone} text-white text-base"></i>
+    </div>
+    <div class="w-3 h-3 ${corFundo} border-2 border-white rounded-full -mt-1 shadow-md"></div>
+  `;
+        return container;
+      };
+
+      // 🔄 ALTERNADOR DE ABAS
+      function mudarAba(aba) {
+        const abaMapa = document.getElementById("aba-conteudo-mapa");
+        const abaHistorico = document.getElementById("aba-conteudo-historico");
+        const btnMapa = document.getElementById("tab-mapa");
+        const btnHistorico = document.getElementById("tab-historico");
+
+        if (aba === "mapa") {
+          abaMapa.classList.remove("hidden");
+          abaHistorico.classList.add("hidden");
+          btnMapa.className =
+            "tab-btn px-4 py-2.5 rounded-xl bg-white shadow-sm text-gray-900 transition-all flex-1 text-center";
+          btnHistorico.className =
+            "tab-btn px-4 py-2.5 rounded-xl hover:bg-white/50 transition-all flex-1 text-center";
+
+          // Força o mapa 3D a recalcular o tamanho do container
+          setTimeout(() => mapa.resize(), 200);
+        } else {
+          abaMapa.classList.add("hidden");
+          abaHistorico.classList.remove("hidden");
+          btnMapa.className =
+            "tab-btn px-4 py-2.5 rounded-xl hover:bg-white/50 transition-all flex-1 text-center";
+          btnHistorico.className =
+            "tab-btn px-4 py-2.5 rounded-xl bg-white shadow-sm text-gray-900 transition-all flex-1 text-center";
+          renderizarHistorico();
+        }
+      }
+
+      // 👤 CARREGA PERFIL
+      async function carregarPerfilMotoboy() {
+        try {
+          const res = await fetch(`${API}/products/users/me`, {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = "LoginMotoboy.html";
+            return;
+          }
+
+          if (!res.ok) throw new Error(`Erro HTTP! status: ${res.status}`);
+
+          const usuario = await res.json();
+          idMotoboyLogado = usuario.id || usuario._id;
+
+          document.getElementById("moto-nome").innerText =
+            usuario.profile?.name || "Não informado";
+          document.getElementById("moto-email").innerText =
+            usuario.email || "Não informado";
+
+          const veiculoRes = await fetch(`${API}/veiculos/veiculo`, {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (veiculoRes.ok) {
+            const veiculo = await veiculoRes.json();
+            document.getElementById("moto-veiculo").innerText =
+              `${veiculo.modelo} (${veiculo.cor})`;
+            document.getElementById("moto-placa").innerText =
+              veiculo.placa.toUpperCase();
+          } else {
+            document.getElementById("moto-veiculo").innerText =
+              "Nenhum veículo";
+            document.getElementById("moto-placa").innerText = "-";
+          }
+        } catch (err) {
+          console.error("Erro no perfil:", err);
+        }
+      }
+
+      // 🔄 ALTERNAR DISPONIBILIDADE
+      function alternarDisponibilidade() {
+        const btn = document.getElementById("btn-status-motoboy");
+        const divLista = document.getElementById("lista");
+
+        if (pedidoAtivoId) {
+          alert("Você não pode ficar inativo com uma corrida em andamento! 🏁");
+          return;
+        }
+
+        motoboyDisponivel = !motoboyDisponivel;
+
+        if (motoboyDisponivel) {
+          btn.className =
+            "text-xs font-bold bg-emerald-500 text-white px-3 py-2 rounded-xl border border-emerald-600 transition-all flex items-center gap-1.5 shadow-sm";
+          btn.innerHTML = `<i class="fa-solid fa-circle text-[9px] animate-pulse"></i> <span>Estou Ativo</span>`;
+          carregarPedidos();
+        } else {
+          btn.className =
+            "text-xs font-bold bg-gray-500 text-white px-3 py-2 rounded-xl border border-gray-600 transition-all flex items-center gap-1.5 shadow-sm";
+          btn.innerHTML = `<i class="fa-solid fa-moon text-[11px]"></i> <span>Estou Inativo</span>`;
+          divLista.innerHTML = `
+      <div class="bg-amber-50 p-6 rounded-2xl border border-amber-200 text-center text-amber-800 font-medium shadow-sm col-span-full">
+        <i class="fa-solid fa-bed text-xl mb-2 block"></i>
+        Você está em modo de descanso. Fique ativo para receber novas corridas!
+      </div>
+    `;
+        }
+      }
+
+      // 🚪 LOGOUT
+      async function fazerLogout() {
+        if (!confirm("Deseja realmente sair?")) return;
+        try {
+          await fetch(`${API}/products/logout`, {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (err) {
+          console.error(err);
+        } finally {
+          localStorage.clear();
+          window.location.href = "LoginMotoboy.html";
+        }
+      }
+
+      // 🛰️ GEOLOCALIZAÇÃO COM RASTREAMENTO ESTILO WAZE
+      let ultimaPosicaoString = "";
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const latAtual = pos.coords.latitude;
+          const lngAtual = pos.coords.longitude;
+
+          const posicaoStringAtual = `${latAtual.toFixed(5)},${lngAtual.toFixed(5)}`;
+          if (posicaoStringAtual === ultimaPosicaoString) {
+            console.log("🛵 [Waze Mode] Motoboy parado. Câmera congelada.");
+            return;
+          }
+          ultimaPosicaoString = posicaoStringAtual;
+          minhaPosicao = { lat: latAtual, lng: lngAtual };
+
+          // Configuração do marcador 3D para a Moto
+          if (!motoMarker) {
+            const el = criarElementoIcone("fa-solid fa-motorcycle", "bg-black");
+            motoMarker = new maplibregl.Marker({ element: el })
+              .setLngLat([minhaPosicao.lng, minhaPosicao.lat])
+              .setPopup(
+                new maplibregl.Popup({ offset: 25 }).setHTML(
+                  "<div class='font-bold text-xs text-center py-0.5'>🛵 Sua Posição</div>",
+                ),
+              )
+              .addTo(mapa);
+          } else {
+            motoMarker.setLngLat([minhaPosicao.lng, minhaPosicao.lat]);
+          }
+
+          if (pedidoAtivoId && destinoAtivo) {
+            desenharLinhaRota(minhaPosicao, destinoAtivo);
+
+            // Centraliza em perspectiva 3D acompanhando a rota
+            mapa.flyTo({
+              center: [minhaPosicao.lng, minhaPosicao.lat],
+              zoom: 17, // Zoom de rua ideal do Waze
+              pitch: 60, // Mantém a inclinação de horizonte ativa
+              essential: true,
+              duration: 500,
+            });
+          }
+        },
+        () => alert("Por favor, ative seu GPS."),
+        { enableHighAccuracy: true },
+      );
+
+      // 📦 GERENCIADOR DE PEDIDOS DISPONÍVEIS
+      async function carregarPedidos() {
+        if (!motoboyDisponivel && !pedidoAtivoId) return;
+
+        const div = document.getElementById("lista");
+        const cabecalho = document.getElementById("secao-cabecalho");
+        const abas = document.getElementById("abas-navegacao");
+        const titulo = document.getElementById("titulo-pagina");
+
+        if (pedidoAtivoId) {
+          cabecalho.style.display = "none";
+          abas.classList.add("hidden");
+          titulo.innerText = "📍 Rota de Entrega Ativa";
+
+          div.innerHTML = `
+      <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-emerald-600">
+          <i class="fa-solid fa-route text-xl animate-bounce"></i>
+          <h3 class="text-lg font-black text-gray-900">Corrida em Andamento</h3>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+          <div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase block tracking-wider">Tempo Estimado</span>
+            <span id="tempo-restante" class="text-base font-black text-ifood-red">-- min</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 font-bold uppercase block tracking-wider">Distância</span>
+            <span id="distancia-restante" class="text-base font-black text-gray-700">-- km</span>
+          </div>
+        </div>
+
+        <button onclick="simularDeslocamentoDev()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm">
+          <i class="fa-solid fa-flask text-sm"></i> [DEV] Simular Percurso
+        </button>
+
+        <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md" onclick="finalizarCorridaLocal('${pedidoAtivoId}')">
+          <i class="fa-solid fa-circle-check"></i> Concluir Entrega
+        </button>
+
+        <button class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 rounded-xl text-xs transition-all border border-red-100" onclick="cancelarCorridaLocal('${pedidoAtivoId}')">
+          <i class="fa-solid fa-rectangle-xmark"></i> Cancelar/Desistir da Corrida
+        </button>
+      </div>
+    `;
+
+          if (destinoAtivo && !clienteMarker) {
+            const elCliente = criarElementoIcone(
+              "fa-solid fa-house-chimney",
+              "bg-[#ea1d2c]",
+            );
+            clienteMarker = new maplibregl.Marker({ element: elCliente })
+              .setLngLat([destinoAtivo.lng, destinoAtivo.lat])
+              .setPopup(
+                new maplibregl.Popup({ offset: 25 }).setHTML(
+                  `<div class='p-1 text-xs'><strong class='text-ifood-red uppercase tracking-wide block mb-0.5'>Destino Final</strong>Endereço do Cliente</div>`,
+                ),
+              )
+              .addTo(mapa);
+
+            clienteMarker.togglePopup();
+          }
+          return;
+        }
+
+        cabecalho.style.display = "block";
+        abas.classList.remove("hidden");
+        titulo.innerText = "🛵 Entregas Disponíveis (Prontos)";
+
+        try {
+          const res = await fetch(`${API}/pedidos`, { method: "GET" });
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = "LoginMotoboy.html";
+            return;
+          }
+
+          const orders = await res.json();
+          cacheTodosPedidos = Array.isArray(orders)
+            ? orders
+            : orders?.data || orders?.pedidos || [];
+
+          div.innerHTML = "";
+          const pedidosProntos = cacheTodosPedidos.filter(
+            (o) => (o.status || "").toUpperCase().trim() === "READY",
+          );
+
+          if (pedidosProntos.length === 0) {
+            div.innerHTML = `
+        <div class="bg-gray-100/70 p-6 rounded-2xl text-center text-gray-400 text-sm font-medium border border-dashed border-gray-200">
+          <i class="fa-solid fa-mug-hot text-xl mb-2 block text-gray-300"></i> Nenhum pedido pronto na fila agora.
+        </div>`;
+            return;
+          }
+
+          pedidosProntos.forEach((order) => {
+            const displayId = order.id || order._id || "";
+            const databaseId = order._id || order.id || "";
+            const nomeCliente = order.cliente?.nome || "Cliente";
+            const enderecoEntrega =
+              order.entrega?.endereco || "Endereço não informado";
+            const taxa = order.entrega?.taxaEntrega || 0;
+
+            div.innerHTML += `
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col gap-2 relative overflow-hidden group hover:border-ifood-red transition-all">
+          <div class="absolute top-0 left-0 w-1.5 h-full bg-ifood-red"></div>
+          <div class="flex justify-between items-start pl-1">
+            <h3 class="text-base font-black text-gray-900">Pedido #${displayId.toString().slice(-5).toUpperCase()}</h3>
+            <span class="text-[11px] bg-red-50 text-ifood-red font-bold px-2 py-0.5 rounded-md">R$ ${Number(taxa).toFixed(2).replace(".", ",")}</span>
+          </div>
+          <p class="text-xs text-gray-600 pl-1 truncate"><strong>Cliente:</strong> ${nomeCliente}</p>
+          <p class="text-xs text-gray-500 pl-1 line-clamp-2 min-h-[32px]"><strong>Endereço:</strong> ${enderecoEntrega}</p>
+          <div class="flex gap-2 mt-2 pl-1">
+            <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs py-2.5 rounded-xl transition-all" onclick="visualizarRotaApenas('${databaseId}')">🗺️ Ver Rota</button>
+            <button class="flex-1 bg-ifood-red hover:bg-[#d91a29] text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-sm active:scale-95" onclick="aceitarEIniciarEntrega('${databaseId}')">Aceitar ✅</button>
+          </div>
+        </div>
+      `;
+          });
+        } catch (err) {
+          console.error(err);
+          div.innerHTML =
+            "<p class='text-xs text-red-500 font-bold'>Erro ao conectar com a API.</p>";
+        }
+      }
+
+      // 📜 HISTÓRICO LOCAL
+      function renderizarHistorico() {
+        const divHistorico = document.getElementById("lista-historico");
+        const campoTotal = document.getElementById("valor-total-acumulado");
+        const buscaNome = document
+          .getElementById("search-historico")
+          .value.toLowerCase();
+        const filtroPeriodo = document.getElementById("filter-periodo").value;
+
+        let concluidos = cacheTodosPedidos.filter(
+          (o) =>
+            (o.status || "").toUpperCase().trim() === "DELIVERED" &&
+            (o.entrega?.entregadorId || "") === idMotoboyLogado,
+        );
+
+        if (buscaNome) {
+          concluidos = concluidos.filter((o) =>
+            (o.cliente?.nome || "").toLowerCase().includes(buscaNome),
+          );
+        }
+
+        if (filtroPeriodo === "hoje") {
+          const hoje = new Date();
+          const hojeLocal = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+          concluidos = concluidos.filter((o) =>
+            (o.updatedAt || o.createdAt || "").startsWith(hojeLocal),
+          );
+        }
+
+        if (concluidos.length === 0) {
+          divHistorico.innerHTML =
+            "<p class='text-sm text-gray-400 font-semibold p-4 col-span-full text-center'>Nenhuma corrida encontrada.</p>";
+          campoTotal.innerText = "R$ 0,00";
+          return;
+        }
+
+        let totalTaxasAcumulado = 0;
+        divHistorico.innerHTML = "";
+
+        concluidos.forEach((order) => {
+          const displayId = order.id || order._id || "";
+          const nomeCliente = order.cliente?.nome || "Cliente";
+          const endereco = order.entrega?.endereco || "Entregue";
+          const valorTaxa = Number(order.entrega?.taxaEntrega || 0);
+          totalTaxasAcumulado += valorTaxa;
+
+          divHistorico.innerHTML += `
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1.5 border-l-4 border-blue-600">
+        <h3 class="text-sm font-black text-gray-900">Pedido #${displayId.toString().slice(-5).toUpperCase()}</h3>
+        <p class="text-xs text-gray-600"><strong>Cliente:</strong> ${nomeCliente}</p>
+        <p class="text-xs text-gray-400 truncate"><strong>Destino:</strong> ${endereco}</p>
+        <span class="text-xs font-black text-emerald-600 mt-1">🟢 Ganho: R$ ${valorTaxa.toFixed(2).replace(".", ",")}</span>
+      </div>
+    `;
+        });
+
+        campoTotal.innerText = `R$ ${totalTaxasAcumulado.toFixed(2).replace(".", ",")}`;
+      }
+
+      function filtrarHistorico() {
+        renderizarHistorico();
+      }
+
+      // 🗺️ TRAÇADO DA LINHA DA ROTA PREMIUM
+      async function plotarRotaNoMapa(databaseId) {
+        if (!minhaPosicao) {
+          alert("Aguardando sinal do GPS...");
+          return null;
+        }
+
+        try {
+          const res = await fetch(`${API}/pedidos/${databaseId}`);
+          const order = await res.json();
+          const endereco = order.entrega?.endereco;
+
+          if (!endereco) return null;
+
+          const geo = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`,
+          );
+          const dados = await geo.json();
+          if (!dados.length) {
+            alert("Endereço não localizado.");
+            return null;
+          }
+
+          const destino = {
+            lat: Number(dados[0].lat),
+            lng: Number(dados[0].lon),
+          };
+
+          if (clienteMarker) clienteMarker.remove();
+
+          const elCliente = criarElementoIcone(
+            "fa-solid fa-house-chimney",
+            "bg-[#ea1d2c]",
+          );
+          clienteMarker = new maplibregl.Marker({ element: elCliente })
+            .setLngLat([destino.lng, destino.lat])
+            .setPopup(
+              new maplibregl.Popup({ offset: 25 }).setHTML(
+                `<div class='text-xs font-bold py-0.5'>🏠 ${order.cliente?.nome || "Cliente"}</div>`,
+              ),
+            )
+            .addTo(mapa);
+
+          clienteMarker.togglePopup();
+
+          desenharLinhaRota(minhaPosicao, destino);
+          return destino;
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      }
+
+      // 📐 FUNÇÃO MATEMÁTICA: Calcula o ângulo (Azimute) real entre dois pontos para girar a câmera
+      function calcularAnguloDirecao(ponto1, ponto2) {
+        if (!ponto1 || !ponto2) return 0;
+        const lat1 = (ponto1.lat * Math.PI) / 180;
+        const lat2 = (ponto2.lat * Math.PI) / 180;
+        const dLng = ((ponto2.lng - ponto1.lng) * Math.PI) / 180;
+
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x =
+          Math.cos(lat1) * Math.sin(lat2) -
+          Math.sin(lat1) * Math.cos(lat2) * Math.sin(dLng);
+
+        let brng = (Math.atan2(y, x) * 180) / Math.PI;
+        return (brng + 360) % 360;
+      }
+
+      // 🧭 VARIÁVEIS DE CONTROLE DA NAVEGAÇÃO
+      let instrucoesRota = [];
+      let indicadorFocoAtivo = true;
+      let coordenadasRotaAtual = []; // Guarda os pontos geográficos da rota atual
+
+      // Se o motorista arrastar o mapa manualmente, desativa a câmera automática temporariamente
+      mapa.on("dragstart", () => {
+        indicadorFocoAtivo = false;
+      });
+
+      function recentralizarCameraWaze() {
+        indicadorFocoAtivo = true;
+        if (minhaPosicao) {
+          mapa.flyTo({
+            center: [minhaPosicao.lng, minhaPosicao.lat],
+            zoom: 18,
+            pitch: 60,
+            duration: 1000,
+          });
+        }
+      }
+
+      // 🗺️ NOVO DESENHADOR DE ROTAS 3D VETORIAL (Substitui o L.Routing do Leaflet)
+      async function desenharLinhaRota(origem, destino) {
+        try {
+          // Busca a rota real na malha de ruas pública do OSRM
+          const urlOSRM = `https://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=full&geometries=geojson&steps=true`;
+          const res = await fetch(urlOSRM);
+          const dados = await res.json();
+
+          if (!dados.routes || dados.routes.length === 0) return;
+
+          const rota = dados.routes[0];
+          coordenadasRotaAtual = rota.geometry.coordinates; // Formato [[lng, lat], ...]
+
+          // Processa os passos/instruções da rota para o painel de navegação
+          instrucoesRota = rota.legs[0].steps.map((step) => ({
+            text: step.maneuver.instruction,
+            distance: step.distance,
+            location: step.maneuver.location,
+          }));
+
+          // Atualiza os painéis visuais do HTML do Waze se eles existirem
+          const topPanel = document.getElementById("waze-top-panel");
+          const bottomPanel = document.getElementById("waze-bottom-panel");
+          if (topPanel) topPanel.classList.remove("hidden");
+          if (bottomPanel) bottomPanel.classList.remove("hidden");
+
+          const campoTempo = document.getElementById("tempo-restante");
+          const campoDistancia = document.getElementById("distancia-restante");
+          if (campoTempo)
+            campoTempo.innerText = `${Math.ceil(rota.duration / 60)} min`;
+          if (campoDistancia)
+            campoDistancia.innerText = `${(rota.distance / 1000).toFixed(1)} km`;
+
+          if (instrucoesRota.length > 0) {
+            const painelTexto = document.getElementById("waze-proxima-rua");
+            if (painelTexto)
+              painelTexto.innerText = traduzirInstrucaoWaze(
+                instrucoesRota[0].text,
+              );
+          }
+
+          // Cria ou atualiza a linha tridimensional no MapLibre
+          const geojson = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: coordenadasRotaAtual,
+            },
+          };
+
+          if (mapa.getSource("rota-ativa")) {
+            mapa.getSource("rota-ativa").setData(geojson);
+          } else {
+            mapa.addSource("rota-ativa", { type: "geojson", data: geojson });
+
+            // Camada interna da linha da rota (Laranja vibrante Waze)
+            mapa.addLayer({
+              id: "camada-rota-linha",
+              type: "line",
+              source: "rota-ativa",
+              layout: { "line-join": "round", "line-cap": "round" },
+              paint: { "line-color": "#ff7a00", "line-width": 6 },
+            });
+          }
+
+          // Se não houver pedido ativo, enquadra a rota inteira na tela inicial
+          if (!pedidoAtivoId && indicadorFocoAtivo) {
+            const bounds = coordenadasRotaAtual.reduce(
+              (b, coord) => b.extend(coord),
+              new maplibregl.LngBounds(
+                coordenadasRotaAtual[0],
+                coordenadasRotaAtual[0],
+              ),
+            );
+            mapa.fitBounds(bounds, { padding: 50 });
+          }
+        } catch (err) {
+          console.error("Erro ao traçar rota viana API:", err);
+        }
+      }
+
+      async function visualizarRotaApenas(databaseId) {
+        await plotarRotaNoMapa(databaseId);
+      }
+
+      // 🚀 ACEITAR CORRIDA
+      async function aceitarEIniciarEntrega(databaseId) {
+        const destinoCoordenadas = await plotarRotaNoMapa(databaseId);
+        if (!destinoCoordenadas) return;
+
+        try {
+          const res = await fetch(`${API}/pedidos/${databaseId}/status`, {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "OUT_FOR_DELIVERY" }),
+          });
+
+          if (res.ok) {
+            localStorage.setItem("pedidoAtivoId", databaseId);
+            localStorage.setItem(
+              "destinoAtivo",
+              JSON.stringify(destinoCoordenadas),
+            );
+            pedidoAtivoId = databaseId;
+            destinoAtivo = destinoCoordenadas;
+
+            carregarPedidos();
+            ativarPredios3D(); // Ativa os prédios em 3D na área urbana
+
+            if (minhaPosicao) {
+              mapa.flyTo({
+                center: [minhaPosicao.lng, minhaPosicao.lat],
+                zoom: 17,
+                pitch: 60,
+                essential: true,
+              });
+            }
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      // 🏁 CONCLUIR CORRIDA
+      async function finalizarCorridaLocal(databaseId) {
+        if (!confirm("Confirmar entrega como realizada?")) return;
+        try {
+          const res = await fetch(`${API}/pedidos/${databaseId}/status`, {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "DELIVERED" }),
+          });
+
+          if (res.ok) {
+            limparMapaOriginal();
+            carregarPedidos();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // 🛑 CANCELAR/DESISTIR DA CORRIDA
+      async function cancelarCorridaLocal(databaseId) {
+        if (!confirm("Tem certeza que deseja desistir desta entrega?")) return;
+        try {
+          const res = await fetch(`${API}/pedidos/${databaseId}/status`, {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "CANCELED" }),
+          });
+
+          if (res.ok) {
+            limparMapaOriginal();
+            carregarPedidos();
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // 🧪 SIMULADOR TOTALMENTE AJUSTADO PARA O AMBIENTE 3D NATIVO
+      function simularDeslocamentoDev() {
+        if (coordenadasRotaAtual.length === 0 || !motoMarker) return;
+
+        let index = 0;
+        if (window.intervaloWaze) clearInterval(window.intervaloWaze);
+        indicadorFocoAtivo = true;
+
+        window.intervaloWaze = setInterval(() => {
+          if (index >= coordenadasRotaAtual.length) {
+            clearInterval(window.intervaloWaze);
+            window.intervaloWaze = null;
+            const painelTexto = document.getElementById("waze-proxima-rua");
+            if (painelTexto)
+              painelTexto.innerText = "🏁 Você chegou ao destino!";
+            alert("🛵 Entrega concluída com sucesso!");
+            return;
+          }
+
+          const pontoAtualArray = coordenadasRotaAtual[index];
+          const proximoPontoArray =
+            coordenadasRotaAtual[index + 1] || pontoAtualArray;
+
+          const pontoAtual = {
+            lat: pontoAtualArray[1],
+            lng: pontoAtualArray[0],
+          };
+          const proximoPonto = {
+            lat: proximoPontoArray[1],
+            lng: proximoPontoArray[0],
+          };
+
+          minhaPosicao = pontoAtual;
+
+          // 1. Atualiza a posição do Marcador 3D
+          motoMarker.setLngLat([pontoAtual.lng, pontoAtual.lat]);
+
+          // 2. Calcula ângulo real da rua para girar o mapa e o ícone nativamente
+          const anguloWaze = calcularAnguloDirecao(pontoAtual, proximoPonto);
+
+          // Gira o ícone do motoboy usando CSS interno no elemento do marcador do MapLibre
+          const elMoto = motoMarker.getElement().querySelector("i");
+          if (elMoto) elMoto.style.transform = `rotate(${anguloWaze}deg)`;
+
+          // 3. Centraliza a câmera girando o mapa inteiro com base no curso da viagem (Smooth Fly)
+          if (indicadorFocoAtivo) {
+            mapa.easeTo({
+              center: [pontoAtual.lng, pontoAtual.lat],
+              zoom: 17.5,
+              bearing: anguloWaze, // 🧭 O mapa rotaciona na direção das ruas como no Waze!
+              pitch: 60,
+              duration: 0,
+            });
+          }
+
+          // 4. Atualiza informações textuais regressivas simplificadas baseadas no índice
+          if (instrucoesRota.length > 0) {
+            const painelTexto = document.getElementById("waze-proxima-rua");
+            if (painelTexto && index % 5 === 0) {
+              // Encontra uma instrução próxima geográfica aproximada
+              const instrucaoProxima = instrucoesRota.find(
+                (inst) =>
+                  Math.abs(inst.location[0] - pontoAtual.lng) < 0.002 &&
+                  Math.abs(inst.location[1] - pontoAtual.lat) < 0.002,
+              );
+              if (instrucaoProxima) {
+                painelTexto.innerText = traduzirInstrucaoWaze(
+                  instrucaoProxima.text,
+                );
+              }
+            }
+          }
+
+          index += 1;
+        }, 150); // Velocidade de renderização da simulação de quadros
+      }
+
+      // 🌐 CAMADA EXTRA: Ativa modelagem de volumetria 3D de prédios urbanos
+      function activarPredios3D() {
+        if (mapa.getLayer("3d-buildings")) return;
+
+        // Insere prédios com efeito de extrusão 3D abaixo dos símbolos de rótulos de ruas
+        const layers = mapa.getStyle().layers;
+        let labelLayerId;
+        for (let i = 0; i < layers.length; i++) {
+          if (layers[i].type === "symbol" && layers[i].layout["text-field"]) {
+            labelLayerId = layers[i].id;
+            break;
+          }
+        }
+
+        mapa.addLayer(
+          {
+            id: "3d-buildings",
+            source: "openmaptiles",
+            "source-layer": "building",
+            type: "fill-extrusion",
+            minzoom: 15,
+            paint: {
+              "fill-extrusion-color": "#e0e0e0",
+              "fill-extrusion-height": ["get", "render_height"],
+              "fill-extrusion-base": ["get", "render_min_height"],
+              "fill-extrusion-opacity": 0.6,
+            },
+          },
+          labelLayerId,
+        );
+      }
+
+      function traduzirInstrucaoWaze(texto) {
+        if (!texto) return "";
+        return texto
+          .replace(/Head/g, "Siga em direção a")
+          .replace(/Turn left/g, "vire à esquerda")
+          .replace(/Turn right/g, "vire à direita")
+          .replace(/At the roundabout, take the/g, "Na rotatória, pegue a")
+          .replace(/exit/g, "saída")
+          .replace(/In the roundabout, take the/g, "Na rotatória, pegue a")
+          .replace(/destination/g, "destino final");
+      }
+
+      function limparMapaOriginal() {
+        if (window.intervaloWaze) {
+          clearInterval(window.intervaloWaze);
+          window.intervaloWaze = null;
+        }
+        if (mapa.getLayer("camada-rota-linha"))
+          mapa.removeLayer("camada-rota-linha");
+        if (mapa.getSource("rota-ativa")) mapa.removeSource("rota-ativa");
+        if (clienteMarker) {
+          clienteMarker.remove();
+          clienteMarker = null;
+        }
+        pedidoAtivoId = null;
+        destinoAtivo = null;
+        localStorage.removeItem("pedidoAtivoId");
+        localStorage.removeItem("destinoAtivo");
+
+        // Reseta câmera para visão clássica de cima de Fortaleza/Cidade
+        mapa.easeTo({ pitch: 0, bearing: 0, zoom: 13 });
+      }
+
+      // Inicialização do fluxo estável
+      async function inicializar() {
+        await carregarPerfilMotoboy();
+        await carregarPedidos();
+
+        setInterval(() => {
+          if (!pedidoAtivoId && !window.intervaloWaze) {
+            carregarPedidos();
+          }
+        }, 15000);
+      }
+
+      // Inicia o script quando a estrutura básica do mapa terminar de carregar os estilos de vetores
+      mapa.on("load", () => {
+        inicializar();
+      });
+    </script>
+  </body>
+</html>
