@@ -1,4 +1,4 @@
-const API_URL = "https://prafoodapi.onrender.com";
+const API_URL = "https://essenzaintimasapi.onrender.com";
 const corsWhiteList = {
   development: [
     "http://127.0.0.1:5500",
