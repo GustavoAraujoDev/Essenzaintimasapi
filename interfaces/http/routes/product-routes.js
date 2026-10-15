@@ -194,66 +194,229 @@ router.use(AuthMiddleware(jwtService));
    ROTAS PROTEGIDAS
 ========================= */
 
+
 /**
  * @swagger
  * /products/users/me:
- * get:
- * summary: Retorna os dados do usuário logado e seu perfil.
- * description: Busca informações da conta e detalhes do perfil baseados no token JWT.
- * tags: [Users]
- * security:
- * - bearerAuth: []
- * responses:
- * 200:
- * description: Dados do usuário e perfil retornados com sucesso.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * id:
- * type: string
- * email:
- * type: string
- * role:
- * type: string
- * status:
- * type: string
- * profile:
- * type: object
- * properties:
- * name:
- * type: string
- * phone:
- * type: string
- * document:
- * type: string
- * address:
- * type: object
- * properties:
- * street:
- * type: string
- * city:
- * type: string
- * 401:
- * description: Não autorizado.
- * 404:
- * description: Usuário não encontrado.
+ *   get:
+ *     summary: Retorna os dados do usuário autenticado
+ *     description: Busca informações da conta e os detalhes do perfil com base no token JWT.
+ *     tags:
+ *       - Usuários
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário e perfil retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                 profile:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     document:
+ *                       type: string
+ *                     address:
+ *                       type: object
+ *                       properties:
+ *                         street:
+ *                           type: string
+ *                         number:
+ *                           type: string
+ *                         district:
+ *                           type: string
+ *                         city:
+ *                           type: string
+ *                         state:
+ *                           type: string
+ *                         zipCode:
+ *                           type: string
+ *       401:
+ *         description: Usuário não autenticado
+ *       404:
+ *         description: Usuário não encontrado
  */
-router.get("/users/me", (req, res) => ProductController.getMe(req, res));
+router.get("/users/me", (req, res) =>
+  ProductController.getMe(req, res)
+);
 
+/**
+ * @swagger
+ * /products/users/me:
+ *   patch:
+ *     summary: Atualiza os dados do perfil do usuário autenticado
+ *     description: Atualiza as informações pessoais do usuário logado.
+ *     tags:
+ *       - Usuários
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: João da Silva
+ *               phone:
+ *                 type: string
+ *                 example: "85999999999"
+ *               document:
+ *                 type: string
+ *                 example: "12345678900"
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   number:
+ *                     type: string
+ *                   district:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Perfil atualizado com sucesso
+ *       400:
+ *         description: Dados enviados inválidos
+ *       401:
+ *         description: Usuário não autenticado
+ *       404:
+ *         description: Usuário não encontrado
+ */
 router.patch("/users/me", (req, res) =>
   ProductController.updateMe(req, res)
 );
 
+/**
+ * @swagger
+ * /products/users/me/email:
+ *   patch:
+ *     summary: Solicita alteração do e-mail do usuário
+ *     description: Solicita a alteração do endereço de e-mail da conta autenticada.
+ *     tags:
+ *       - Usuários
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: novo@email.com
+ *     responses:
+ *       200:
+ *         description: Solicitação de alteração de e-mail processada
+ *       400:
+ *         description: E-mail inválido ou dados incompletos
+ *       401:
+ *         description: Usuário não autenticado
+ *       409:
+ *         description: E-mail já está em uso
+ */
 router.patch("/users/me/email", (req, res) =>
   ProductController.requestEmailChange(req, res)
 );
 
+/**
+ * @swagger
+ * /products/users/me/email/confirm:
+ *   post:
+ *     summary: Confirma alteração do e-mail
+ *     description: Confirma a alteração do e-mail utilizando o código ou token de confirmação.
+ *     tags:
+ *       - Usuários
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Código ou token de confirmação enviado ao usuário
+ *               code:
+ *                 type: string
+ *                 description: Código de confirmação, caso utilizado pela aplicação
+ *     responses:
+ *       200:
+ *         description: E-mail confirmado e atualizado com sucesso
+ *       400:
+ *         description: Código ou token inválido ou expirado
+ *       401:
+ *         description: Usuário não autenticado
+ */
 router.post("/users/me/email/confirm", (req, res) =>
   ProductController.confirmEmailChange(req, res)
 );
 
+/**
+ * @swagger
+ * /products/users/me/password:
+ *   patch:
+ *     summary: Altera a senha do usuário autenticado
+ *     description: Permite que o usuário altere sua senha atual.
+ *     tags:
+ *       - Usuários
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Senha atual do usuário
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Nova senha desejada
+ *     responses:
+ *       200:
+ *         description: Senha alterada com sucesso
+ *       400:
+ *         description: Senha atual incorreta ou nova senha inválida
+ *       401:
+ *         description: Usuário não autenticado
+ */
 router.patch("/users/me/password", (req, res) =>
   ProductController.changePassword(req, res)
 );
