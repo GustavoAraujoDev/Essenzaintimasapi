@@ -94,20 +94,23 @@ class RegisterUserUseCase {
       // =========================
       // 👤 CLIENTE FINAL
       // =========================
-      if (role === "CUSTOMER") {
-
+      
+      if (customerData) {
         const customerProfile = new CustomerProfile({
           id: randomUUID(),
           userId: user.id,
-          name: customerData?.name || "Cliente",
-          phone: customerData?.phone || null,
-          document: customerData?.document || null
+          name: customerData.name,
+          phone: customerData.phone || null,
+          document: customerData.document || null
         });
 
         await this.customerRepository.criar(customerProfile);
 
-        console.log("[REGISTER] CustomerProfile criado");
+        console.log("[REGISTER] CustomerProfile criado", {
+          userId: user.id
+        });
       }
+
 
       return {
         id: user.id,
