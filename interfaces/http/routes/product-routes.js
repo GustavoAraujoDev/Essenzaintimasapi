@@ -422,36 +422,41 @@ router.patch("/users/me/password", (req, res) =>
 );
 
 
+
 /**
  * @swagger
  * /products/logout:
- * post:
- * summary: Realiza o logout do usuário
- * description: Remove o cookie de autenticação (HttpOnly) do navegador do cliente.
- * tags: [Autenticação]
- * responses:
- * 200:
- * description: Logout realizado com sucesso. O cookie foi removido.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: Logout realizado com sucesso
- * 500:
- * description: Erro interno no servidor ao processar o logout.
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * error:
- * type: string
- * example: Erro ao deslogar
+ *   post:
+ *     summary: Realiza o logout do usuário
+ *     description: Remove o cookie de autenticação HttpOnly do navegador do cliente.
+ *     tags:
+ *       - Autenticação
+ *     responses:
+ *       200:
+ *         description: Logout realizado com sucesso. O cookie foi removido.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Logout realizado com sucesso
+ *       500:
+ *         description: Erro interno no servidor ao processar o logout.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Erro ao deslogar
  */
-router.post("/logout", (req, res) => ProductController.logout(req, res));
+router.post("/logout", (req, res) =>
+  ProductController.logout(req, res)
+);
+
 
 /**
  * @swagger
