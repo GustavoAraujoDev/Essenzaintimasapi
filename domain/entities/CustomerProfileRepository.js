@@ -11,7 +11,7 @@ class CustomerProfileRepository {
     throw new Error("Método 'buscarPorUserId' não implementado");
   }
 
-  async atualizar(id, dados) {
+  async atualizarPorUserId(id, dados) {
     throw new Error("Método 'atualizar' não implementado");
   }
 
