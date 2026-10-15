@@ -188,18 +188,24 @@ class RegisterUserUseCase {
       await this.membershipRepository.criar(membership);
     }
 
-    // 11. Criar perfil de cliente.
-    if (role === "CUSTOMER" && customerData) {
-      const customerProfile = new CustomerProfile({
-        id: randomUUID(),
-        userId: user.id,
-        name: customerData.name.trim(),
-        phone: customerData.phone || null,
-        document: customerData.document || null
-      });
-
-      await this.customerRepository.criar(customerProfile);
-    }
+    // 11. Criar perfil pessoal vinculado à conta criada.
+if (
+  ["CUSTOMER", "EMPLOYEE", "ADMIN"].includes(role)
+) {
+  const customerProfile = new CustomerProfile({
+    id: randomUUID(),
+    userId: user.id,
+    name: personalData.name.trim(),
+    phone: personalData.phone || null,
+    document: personalData.document || null
+  });
+  await this.customerRepository.criar(customerProfile);
+  console.log("[REGISTER] Perfil pessoal criado", {
+    userId: user.id,
+    role: user.role,
+    name: personalData.name.trim()
+  });
+}
 
     // 12. Registrar conclusão.
     const companyId =
