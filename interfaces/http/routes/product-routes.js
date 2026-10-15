@@ -242,6 +242,23 @@ router.use(AuthMiddleware(jwtService));
  */
 router.get("/users/me", (req, res) => ProductController.getMe(req, res));
 
+router.patch("/users/me", (req, res) =>
+  ProductController.updateMe(req, res)
+);
+
+router.patch("/users/me/email", (req, res) =>
+  ProductController.requestEmailChange(req, res)
+);
+
+router.post("/users/me/email/confirm", (req, res) =>
+  ProductController.confirmEmailChange(req, res)
+);
+
+router.patch("/users/me/password", (req, res) =>
+  ProductController.changePassword(req, res)
+);
+
+
 /**
  * @swagger
  * /products/logout:
