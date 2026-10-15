@@ -261,57 +261,56 @@ class ProductController {
   }
 
   async getMe(req, res) {
-    try {
-      console.log(req.user.id);
-      // O id vem do middleware de autenticação (ex: req.user.id)
-      // Para (forma mais segura):
-      const userId = req.user?.id || req.user?.sub;
-
-      // 1. Busca dados da conta (Email, Role, Status)
-      const user = await repoUser.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado" });
-      }
-
-      // 2. Busca dados do perfil (Nome, Telefone, Endereço)
-      const profile = await repoCustomer.buscarPorUserId(userId);
-      // 🎯 AQUI ESTÁ A CORREÇÃO: Coloque a busca do membership dentro de um try/catch isolado
-      let membership = null;
-      try {
-        membership = await repoMembership.buscarPorId(userId);
-      } catch (membershipError) {
-        // Se não encontrar o membership (caso dos motoboys), o sistema apenas ignora o erro
-        // e mantém a variável como null, sem derrubar o servidor com erro 500
-        console.log(
-          `[INFO] Usuário ${userId} não possui membership. Prosseguindo como autônomo.`,
-        );
-      }
-
-      // 3. Monta o objeto consolidado para o Frontend
-      const userData = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        // O status do USER é para o login, o status do MEMBERSHIP é para a loja
-        storeStatus: membership ? membership.status : "INACTIVE",
-        profile: profile
-          ? {
-              name: profile.name,
-              phone: profile.phone,
-              document: profile.document,
-              address: profile.address,
-            }
-          : null,
-      };
-
-      return res.status(200).json(userData);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Erro interno ao buscar perfil" });
+  try {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) {
+      return res.status(401).json({
+        message: "Usuário não autenticado."
+      });
     }
+    const user = await repoUser.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuário não encontrado."
+      });
+    }
+    const profile = await repoCustomer.buscarPorUserId(userId);
+    console.log("[ESSENZA][GET ME]", {
+      userId,
+      userEncontrado: Boolean(user),
+      profileEncontrado: Boolean(profile),
+      nomeDisponivel: Boolean(profile?.name)
+    });
+    let membership = null;
+    try {
+      membership = await repoMembership.buscarPorId(userId);
+    } catch (error) {
+      console.info(
+        "[ESSENZA] Membership não encontrado para esta conta."
+      );
+    }
+    return res.status(200).json({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      storeStatus: membership?.status ?? "INACTIVE",
+      profile: profile
+        ? {
+            name: profile.name,
+            phone: profile.phone,
+            document: profile.document,
+            address: profile.address
+          }
+        : null
+    });
+  } catch (error) {
+    console.error("[ESSENZA][GET ME]", error);
+    return res.status(500).json({
+      message: "Erro interno ao buscar perfil."
+    });
   }
-  
+}
   
 async updateMe(req, res) {
   try {
