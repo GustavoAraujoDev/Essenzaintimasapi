@@ -34,6 +34,21 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ['ACTIVE', 'blocked', 'inactive'],
       default: 'ACTIVE'
+},
+pendingEmail: {
+  type: String,
+  default: null,
+  lowercase: true
+},
+
+emailChangeTokenHash: {
+  type: String,
+  default: null
+},
+
+emailChangeExpiresAt: {
+  type: Date,
+  default: null
 }
   },
   {
@@ -136,6 +151,112 @@ class UserRepositoryMongo extends UserRepository {
       updatedAt: doc.updatedAt
     }));
   }
+  
+  async findAccountById(id) {
+  const userId = typeof id === "string" ? id : id?.id;
+
+  if (!userId) return null;
+
+  return UserModel.findOne({ id: userId })
+    .select("+passwordHash")
+    .lean();
+}
+
+async updatePasswordHash(id, passwordHash) {
+  const userId = typeof id === "string" ? id : id?.id;
+
+  if (!userId) {
+    throw new Error("ID do usuário inválido.");
+  }
+
+  return UserModel.findOneAndUpdate(
+    { id: userId },
+    {
+      $set: {
+        passwordHash,
+        updatedAt: new Date()
+      }
+    },
+    { new: true }
+  ).select("-passwordHash").lean();
+}
+
+async findByEmailNormalized(email) {
+  return UserModel.findOne({
+    email: email.trim().toLowerCase()
+  }).lean();
+}
+
+async savePendingEmailChange(id, email, tokenHash, expiresAt) {
+  const userId = typeof id === "string" ? id : id?.id;
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existing = await UserModel.findOne({
+    email: normalizedEmail,
+    id: { $ne: userId }
+  }).lean();
+
+  if (existing) {
+    const error = new Error("Este e-mail já está cadastrado.");
+    error.code = "EMAIL_IN_USE";
+    throw error;
+  }
+
+  const pending = await UserModel.findOneAndUpdate(
+    { id: userId },
+    {
+      $set: {
+        pendingEmail: normalizedEmail,
+        emailChangeTokenHash: tokenHash,
+        emailChangeExpiresAt: expiresAt,
+        updatedAt: new Date()
+      }
+    },
+    { new: true, runValidators: true }
+  ).select("-passwordHash").lean();
+
+  if (!pending) {
+    throw new Error("Usuário não encontrado.");
+  }
+
+  return pending;
+}
+
+async confirmPendingEmailChange(tokenHash) {
+  const user = await UserModel.findOne({
+    emailChangeTokenHash: tokenHash,
+    emailChangeExpiresAt: { $gt: new Date() },
+    pendingEmail: { $ne: null }
+  });
+
+  if (!user) return null;
+
+  const emailEmUso = await UserModel.findOne({
+    email: user.pendingEmail,
+    id: { $ne: user.id }
+  }).lean();
+
+  if (emailEmUso) {
+    const error = new Error("Este e-mail já está cadastrado.");
+    error.code = "EMAIL_IN_USE";
+    throw error;
+  }
+
+  user.email = user.pendingEmail;
+  user.pendingEmail = null;
+  user.emailChangeTokenHash = null;
+  user.emailChangeExpiresAt = null;
+  user.updatedAt = new Date();
+
+  await user.save();
+
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    status: user.status
+  };
+}
 }
 
 module.exports = { UserRepositoryMongo, UserModel };
