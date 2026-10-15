@@ -195,9 +195,9 @@ if (
   const customerProfile = new CustomerProfile({
     id: randomUUID(),
     userId: user.id,
-    name: personalData.name.trim(),
-    phone: personalData.phone || null,
-    document: personalData.document || null
+    name: customerData.name.trim(),
+    phone: customerData.phone || null,
+    document: customerData.document || null
   });
   await this.customerRepository.criar(customerProfile);
   console.log("[REGISTER] Perfil pessoal criado", {
