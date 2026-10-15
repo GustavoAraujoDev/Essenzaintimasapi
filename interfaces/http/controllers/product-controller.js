@@ -311,6 +311,402 @@ class ProductController {
       return res.status(500).json({ message: "Erro interno ao buscar perfil" });
     }
   }
+  
+  
+async updateMe(req, res) {
+  try {
+    const userId = req.user?.id || req.user?.sub;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Usuário não autenticado."
+      });
+    }
+
+    const { name, phone, document, address } = req.body || {};
+
+    const dados = {};
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim().length < 2) {
+        return res.status(400).json({
+          message: "Informe um nome válido."
+        });
+      }
+      dados.name = name.trim();
+    }
+
+    if (phone !== undefined) {
+      if (typeof phone !== "string") {
+        return res.status(400).json({
+          message: "Telefone inválido."
+        });
+      }
+      dados.phone = phone.trim();
+    }
+
+    if (document !== undefined) {
+      if (document !== null && typeof document !== "string") {
+        return res.status(400).json({
+          message: "Documento inválido."
+        });
+      }
+      dados.document = document?.trim() || null;
+    }
+
+    if (address !== undefined) {
+      if (
+        !address ||
+        typeof address !== "object" ||
+        Array.isArray(address)
+      ) {
+        return res.status(400).json({
+          message: "Endereço inválido."
+        });
+      }
+
+      const addressFields = [
+        "street",
+        "number",
+        "district",
+        "city",
+        "state",
+        "zipCode"
+      ];
+
+      dados.address = {};
+
+      for (const field of addressFields) {
+        if (address[field] !== undefined) {
+          if (typeof address[field] !== "string") {
+            return res.status(400).json({
+              message: `Campo de endereço inválido: ${field}.`
+            });
+          }
+
+          dados.address[field] = address[field].trim();
+        }
+      }
+    }
+
+    if (Object.keys(dados).length === 0) {
+      return res.status(400).json({
+        message: "Informe pelo menos um campo para atualizar."
+      });
+    }
+
+    const perfilExistente = await repoCustomer.buscarPorUserId(userId);
+
+    if (!perfilExistente) {
+      return res.status(404).json({
+        message: "Perfil não encontrado."
+      });
+    }
+
+    // Atualização parcial do endereço para preservar campos omitidos.
+    if (dados.address) {
+      const enderecoAtual = perfilExistente.address?.toObject
+        ? perfilExistente.address.toObject()
+        : (perfilExistente.address || {});
+
+      dados.address = {
+        ...enderecoAtual,
+        ...dados.address
+      };
+    }
+
+    const perfilAtualizado = await repoCustomer.atualizarPorUserId(
+      userId,
+      dados
+    );
+
+    if (!perfilAtualizado) {
+      return res.status(404).json({
+        message: "Perfil não encontrado."
+      });
+    }
+
+    return res.status(200).json({
+      message: "Perfil atualizado com sucesso.",
+      profile: {
+        name: perfilAtualizado.name,
+        phone: perfilAtualizado.phone,
+        document: perfilAtualizado.document,
+        address: perfilAtualizado.address
+      }
+    });
+  } catch (error) {
+    console.error("[updateMe]", error);
+
+    return res.status(500).json({
+      message: "Não foi possível atualizar o perfil."
+    });
+  }
+}
+
+
+async requestEmailChange(req, res) {
+  try {
+    const userId = req.user?.id || req.user?.sub;
+    const { newEmail, currentPassword } = req.body || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Usuário não autenticado."
+      });
+    }
+
+    if (
+      typeof newEmail !== "string" ||
+      typeof currentPassword !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Informe o novo e-mail e sua senha atual."
+      });
+    }
+
+    const email = newEmail.trim().toLowerCase();
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!emailValido || email.length > 254) {
+      return res.status(400).json({
+        message: "Informe um e-mail válido."
+      });
+    }
+
+    const user = await repoUser.findAccountById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuário não encontrado."
+      });
+    }
+
+    const senhaCorreta = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
+
+    if (!senhaCorreta) {
+      return res.status(401).json({
+        message: "Senha atual incorreta."
+      });
+    }
+
+    if (email === user.email.toLowerCase()) {
+      return res.status(400).json({
+        message: "O novo e-mail é igual ao atual."
+      });
+    }
+
+    const emailExistente = await repoUser.findByEmailNormalized(email);
+
+    if (emailExistente && emailExistente.id !== userId) {
+      return res.status(409).json({
+        message: "Este e-mail já está cadastrado."
+      });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await repoUser.savePendingEmailChange(
+      userId,
+      email,
+      tokenHash,
+      expiresAt
+    );
+
+    const baseUrl = process.env.FRONTEND_URL;
+
+    if (!baseUrl) {
+      throw new Error("FRONTEND_URL não configurada.");
+    }
+
+    const link = new URL("/confirmar-email", baseUrl);
+    link.searchParams.set("token", token);
+
+    try {
+      await EmailService.enviarConfirmacaoEmail(
+        email,
+        link.toString()
+      );
+    } catch (emailError) {
+      console.error("[requestEmailChange] Falha ao enviar e-mail:", emailError);
+
+      // Remove a solicitação que não pôde ser enviada.
+      // Só limpe se ela ainda corresponder ao token desta solicitação.
+      const UserModel = require("../../../infra/repositories/UserRepositoryMongo").UserModel;
+
+      await UserModel.updateOne(
+        {
+          id: userId,
+          emailChangeTokenHash: tokenHash
+        },
+        {
+          $set: {
+            pendingEmail: null,
+            emailChangeTokenHash: null,
+            emailChangeExpiresAt: null
+          }
+        }
+      );
+
+      return res.status(503).json({
+        message: "Não foi possível enviar o e-mail de confirmação."
+      });
+    }
+
+    return res.status(200).json({
+      message: "Enviamos um link de confirmação para o novo endereço."
+    });
+  } catch (error) {
+    if (error.code === "EMAIL_IN_USE") {
+      return res.status(409).json({
+        message: "Este e-mail já está cadastrado."
+      });
+    }
+
+    console.error("[requestEmailChange]", error);
+
+    return res.status(500).json({
+      message: "Não foi possível solicitar a alteração de e-mail."
+    });
+  }
+}
+
+
+async confirmEmailChange(req, res) {
+  try {
+    const { token } = req.body || {};
+
+    if (
+      typeof token !== "string" ||
+      !/^[a-f0-9]{64}$/i.test(token)
+    ) {
+      return res.status(400).json({
+        message: "Token de confirmação inválido."
+      });
+    }
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await repoUser.confirmPendingEmailChange(tokenHash);
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Link inválido ou expirado. Solicite uma nova confirmação."
+      });
+    }
+
+    return res.status(200).json({
+      message: "E-mail alterado com sucesso.",
+      email: user.email
+    });
+  } catch (error) {
+    if (error.code === "EMAIL_IN_USE") {
+      return res.status(409).json({
+        message: "Este e-mail já está cadastrado."
+      });
+    }
+
+    console.error("[confirmEmailChange]", error);
+
+    return res.status(500).json({
+      message: "Não foi possível confirmar o novo e-mail."
+    });
+  }
+}
+
+
+async changePassword(req, res) {
+  try {
+    const userId = req.user?.id || req.user?.sub;
+    const { currentPassword, newPassword, confirmPassword } = req.body || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Usuário não autenticado."
+      });
+    }
+
+    if (
+      typeof currentPassword !== "string" ||
+      typeof newPassword !== "string" ||
+      typeof confirmPassword !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Preencha todos os campos de senha."
+      });
+    }
+
+    if (newPassword.length < 12 || newPassword.length > 72) {
+      return res.status(400).json({
+        message: "A nova senha deve ter entre 12 e 72 caracteres."
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "A confirmação da nova senha não confere."
+      });
+    }
+
+    const user = await repoUser.findAccountById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Usuário não encontrado."
+      });
+    }
+
+    const senhaAtualCorreta = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
+
+    if (!senhaAtualCorreta) {
+      return res.status(401).json({
+        message: "Senha atual incorreta."
+      });
+    }
+
+    const mesmaSenha = await bcrypt.compare(
+      newPassword,
+      user.passwordHash
+    );
+
+    if (mesmaSenha) {
+      return res.status(400).json({
+        message: "Escolha uma senha diferente da atual."
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await repoUser.updatePasswordHash(userId, passwordHash);
+
+    return res.status(200).json({
+      message: "Senha alterada com sucesso."
+    });
+  } catch (error) {
+    console.error("[changePassword]", error);
+
+    return res.status(500).json({
+      message: "Não foi possível alterar a senha."
+    });
+  }
+}
+
 
   async Registrer(req, res) {
     try {
