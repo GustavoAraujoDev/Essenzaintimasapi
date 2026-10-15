@@ -1,3 +1,6 @@
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const EmailService = require("../../../domain/services/EmailService");
 const CreateProduct = require("../../../application/use-cases/create-product");
 const GetProducts = require("../../../application/use-cases/get-products");
 const findById = require("../../../application/use-cases/get-product-by-id");
