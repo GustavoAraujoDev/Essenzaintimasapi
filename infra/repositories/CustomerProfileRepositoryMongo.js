@@ -59,19 +59,35 @@ class CustomerProfileRepositoryMongo extends CustomerProfileRepository {
     return await CustomerProfileModel.findOne({ userId });
   }
 
-  async atualizar(id, dados) {
-    const profile = await CustomerProfileModel.findByIdAndUpdate(
-      id,
-      dados,
-      { new: true }
-    );
+  async atualizarPorUserId(userId, dados) {
+  const camposPermitidos = [
+    "name",
+    "phone",
+    "document",
+    "address"
+  ];
 
-    if (!profile) {
-      throw new Error("Perfil não encontrado");
+  const atualizacao = {};
+
+  for (const campo of camposPermitidos) {
+    if (dados[campo] !== undefined) {
+      atualizacao[campo] = dados[campo];
     }
-
-    return profile;
   }
+
+  if (Object.keys(atualizacao).length === 0) {
+    throw new Error("Nenhum campo válido para atualizar.");
+  }
+
+  return CustomerProfileModel.findOneAndUpdate(
+    { userId },
+    { $set: atualizacao },
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+}
 
   async deletar(id) {
     const profile = await CustomerProfileModel.findByIdAndDelete(id);
