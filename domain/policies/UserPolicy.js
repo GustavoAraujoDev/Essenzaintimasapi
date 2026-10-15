@@ -9,48 +9,25 @@ class UserPolicy {
    */
 
   static canLogin(user, context = {}) {
-
-    if (!user || user.status !== "ACTIVE") {
-
-      return false;
-
-    }
-
-    // Somente administrador e funcionário.
-
-    const allowedRoles = ["ADMIN", "EMPLOYEE"];
-
-    if (!allowedRoles.includes(user.role)) {
-
-      return false;
-
-    }
-
-    // Bloqueia IP na lista negra.
-
-    if (context.ip === "BLACKLISTED") {
-
-      return false;
-
-    }
-
-    // Exige dispositivo confiável e MFA.
-
-    if (
-
-      context.deviceTrusted !== true ||
-
-      context.mfaValidated !== true
-
-    ) {
-
-      return false;
-
-    }
-
-    return true;
-
+  if (!user || user.status !== "ACTIVE") {
+    return false;
   }
+  const allowedRoles = ["ADMIN", "EMPLOYEE"];
+  if (!allowedRoles.includes(user.role)) {
+    return false;
+  }
+  if (context.ip === "BLACKLISTED") {
+    return false;
+  }
+  // Requer validação de dispositivo e MFA.
+  if (
+    context.deviceTrusted !== true ||
+    context.mfaValidated !== true
+  ) {
+    return false;
+  }
+  return true;
+}
 
   static canRegister(actor, context) {
     return (
