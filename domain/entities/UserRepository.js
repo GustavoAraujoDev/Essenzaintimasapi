@@ -8,7 +8,6 @@ class UserRepository {
   findAccountById(id) {}
   findByEmailNormalized(email) {}
   savePendingEmailChange(id, email, tokenHash, expiresAt) {}
-  
   confirmPendingEmailChange(tokenHash){}
 }
 
