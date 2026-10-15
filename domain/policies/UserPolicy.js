@@ -2,13 +2,54 @@ class UserPolicy {
   /**
    * ABAC para login
    */
-  static canLogin(user, context) {
-    return (
-      user.status === "ACTIVE" &&
-      context.ip !== "BLACKLISTED" &&
-      context.deviceTrusted === true &&
-      context.mfaValidated === true
-    );
+  /**
+
+   * ABAC: somente ADMIN e EMPLOYEE podem fazer login.
+
+   */
+
+  static canLogin(user, context = {}) {
+
+    if (!user || user.status !== "ACTIVE") {
+
+      return false;
+
+    }
+
+    // Somente administrador e funcionário.
+
+    const allowedRoles = ["ADMIN", "EMPLOYEE"];
+
+    if (!allowedRoles.includes(user.role)) {
+
+      return false;
+
+    }
+
+    // Bloqueia IP na lista negra.
+
+    if (context.ip === "BLACKLISTED") {
+
+      return false;
+
+    }
+
+    // Exige dispositivo confiável e MFA.
+
+    if (
+
+      context.deviceTrusted !== true ||
+
+      context.mfaValidated !== true
+
+    ) {
+
+      return false;
+
+    }
+
+    return true;
+
   }
 
   static canRegister(actor, context) {
