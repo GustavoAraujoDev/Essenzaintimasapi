@@ -59,14 +59,23 @@ class LoginUserUseCase {
     if (!membership) {
       throw new Error("USER_WITHOUT_COMPANY");
     }
-    // Confirma a consistência do papel, caso o vínculo
-    // também armazene essa informação.
-    if (
-      membership.role &&
-      membership.role !== user.role
-    ) {
-      throw new Error("MEMBERSHIP_ROLE_MISMATCH");
-    }
+    const validMembershipRoles = {
+  ADMIN: ["OWNER"],
+  EMPLOYEE: ["STAFF"]
+};
+
+const allowedRoles = validMembershipRoles[user.role];
+
+if (
+  !allowedRoles ||
+  !allowedRoles.includes(membership.role)
+) {
+  throw new Error("MEMBERSHIP_ROLE_MISMATCH");
+}
+
+if (membership.status !== "ACTIVE") {
+  throw new Error("MEMBERSHIP_INACTIVE");
+}
     // 4. Registra o login bem-sucedido.
     user.registerSuccessfulLogin(context);
     await this.userRepo.update(user);
