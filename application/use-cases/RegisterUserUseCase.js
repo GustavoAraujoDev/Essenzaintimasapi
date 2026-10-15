@@ -203,7 +203,7 @@ if (
   console.log("[REGISTER] Perfil pessoal criado", {
     userId: user.id,
     role: user.role,
-    name: personalData.name.trim()
+    name: customerData.name.trim()
   });
 }
 
