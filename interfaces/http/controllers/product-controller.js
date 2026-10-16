@@ -707,85 +707,140 @@ async changePassword(req, res) {
 }
 
 
-  async Registrer(req, res) {
-    try {
-      const { email, password, role, companyData, customerData } = req.body;
-      const authUserId = req.user?.id;
+  
+async Registrer(req, res) {
+  try {
+    const {
+      email,
+      password,
+      role,
+      companyData,
+      customerData,
+    } = req.body;
 
-      // 🔥 NOVA LÓGICA: Só barra o 401 se NÃO for CUSTOMER e não tiver token
-      if (role !== "CUSTOMER" && !authUserId) {
-        return res.status(401).json({
-          error: "Não autenticado: Apenas clientes podem se auto-registrar.",
-        });
-      }
+    const authUserId = req.user?.id;
 
-      const context = {
-        ip: req.ip,
-        userAgent: req.headers["user-agent"],
-        mfaValidated: true,
-        sessionAgeMinutes: 2,
-      };
-
-      // 🔥 Dependências (ideal depois mover para DI container)
-      const userRepo = new UserRepositoryMongo();
-      const passwordService = new BcryptPasswordService();
-      const companyRepository = new CompanyRepositoryMongo();
-      const membershipRepository = new MembershipRepositoryMongo();
-      const customerRepository = new CustomerRepositoryMongo();
-
-      const registerUserUseCase = new RegisterUserUseCase(
-        userRepo,
-        passwordService,
-        companyRepository,
-        membershipRepository,
-        customerRepository,
-      );
-
-      const result = await registerUserUseCase.execute({
-        authUserId,
-        context,
-        email,
-        password,
-        role,
-        companyData,
-        customerData,
-      });
-
-      return res.status(201).json({
-        message: "Usuário criado com sucesso",
-        user: result,
-      });
-    } catch (error) {
-      console.error("[REGISTER_CONTROLLER_ERROR]", error.message);
-
-      const message = error.message || "Erro interno";
-
-      // 🔥 Mapeamento simples de erros (compatível com UseCase)
-      if (message.includes("Não autenticado")) {
-        return res.status(401).json({ error: message });
-      }
-
-      if (message.includes("Acesso negado")) {
-        return res.status(403).json({ error: message });
-      }
-
-      if (message.includes("já existe")) {
-        return res.status(409).json({ error: message });
-      }
-
-      if (message.includes("Email e senha")) {
-        return res.status(422).json({ error: message });
-      }
-
-      if (message.includes("Role inválida")) {
-        return res.status(422).json({ error: message });
-      }
-
-      return res.status(500).json({
-        error: "Erro interno ao criar usuário",
+    // Apenas CUSTOMER pode se cadastrar sem autenticação.
+    if (role !== "CUSTOMER" && !authUserId) {
+      return res.status(401).json({
+        error: "AUTHENTICATION_REQUIRED",
+        message: "É necessário autenticar-se para cadastrar este usuário.",
       });
     }
+
+    const context = {
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      mfaValidated: true,
+      sessionAgeMinutes: 2,
+    };
+
+    const userRepo = new UserRepositoryMongo();
+    const passwordService = new BcryptPasswordService();
+    const companyRepository = new CompanyRepositoryMongo();
+    const membershipRepository = new MembershipRepositoryMongo();
+    const customerRepository = new CustomerRepositoryMongo();
+
+    const registerUserUseCase = new RegisterUserUseCase(
+      userRepo,
+      passwordService,
+      companyRepository,
+      membershipRepository,
+      customerRepository
+    );
+
+    const result = await registerUserUseCase.execute({
+      authUserId,
+      context,
+      email,
+      password,
+      role,
+      companyData,
+      customerData,
+    });
+
+    return res.status(201).json({
+      message: "Usuário criado com sucesso",
+      user: result,
+    });
+  } catch (error) {
+    console.error(
+      "[REGISTER_CONTROLLER_ERROR]",
+      error.message
+    );
+
+    const message = error.message || "INTERNAL_ERROR";
+
+    // Converte os erros do UseCase em códigos HTTP adequados.
+    const statusByError = {
+      AUTHENTICATION_REQUIRED: 401,
+      ACTOR_NOT_FOUND_OR_INACTIVE: 403,
+      REGISTRATION_NOT_ALLOWED: 403,
+      ACTIVE_ADMIN_MEMBERSHIP_REQUIRED: 403,
+
+      USER_ALREADY_EXISTS: 409,
+      EMAIL_ALREADY_EXISTS: 409,
+
+      ROLE_INVALID: 422,
+      COMPANY_NAME_REQUIRED: 422,
+      CUSTOMER_NAME_REQUIRED: 422,
+      INVALID_EMAIL: 422,
+      INVALID_PASSWORD: 422,
+    };
+
+    let status = statusByError[message];
+
+    // Compatibilidade com mensagens de erro antigas.
+    if (!status && message.includes("Não autenticado")) {
+      status = 401;
+    }
+
+    if (
+      !status &&
+      (
+        message.includes("Acesso negado") ||
+        message.includes("REGISTRATION_NOT_ALLOWED")
+      )
+    ) {
+      status = 403;
+    }
+
+    if (
+      !status &&
+      (
+        message.includes("já existe") ||
+        message.includes("already exists")
+      )
+    ) {
+      status = 409;
+    }
+
+    if (
+      !status &&
+      (
+        message.includes("Email e senha") ||
+        message.includes("Role inválida")
+      )
+    ) {
+      status = 422;
+    }
+
+    status = status || 500;
+
+    const publicMessages = {
+      401: "É necessário autenticar-se para realizar esta operação.",
+      403: "Você não tem permissão para cadastrar este usuário.",
+      409: "Já existe um usuário com este e-mail.",
+      422: "Os dados enviados são inválidos.",
+      500: "Erro interno ao criar usuário.",
+    };
+
+    return res.status(status).json({
+      error: message,
+      message: publicMessages[status],
+    });
   }
+}
 
   async login(req, res) {
     console.log("[LOGIN_CONTROLLER] Request recebida");
