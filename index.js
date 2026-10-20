@@ -29,6 +29,9 @@ const TaxaRoutes = require("./interfaces/http/routes/taxaRoutes");
 const VeiculoRoutes = require("./interfaces/http/routes/motoboy-routes");
 const criarVendaPDVRoutes = require("./interfaces/http/routes/vendaPDVRoutes");
 const connectToDatabase = require("./infra/database/mongodb/mongodb-connection");
+const AuthMiddleware = require("../auth/AuthMiddleware");
+const JwtService = require("../auth/JwtService");
+const jwtService = new JwtService();
 
 /**
 
@@ -146,6 +149,18 @@ app.use("/taxas", TaxaRoutes);
  * @route /veiculos
  */
 app.use("/veiculos", VeiculoRoutes);
+
+app.use(
+  "/vendas",
+  criarVendaPDVRoutes({
+    criarVendaUseCase,
+    cancelarVendaUseCase,
+    vendaRepository,
+    authMiddleware: AuthMiddleware(jwtService),
+  })
+);
+
+
 
 /**
  * =========================
