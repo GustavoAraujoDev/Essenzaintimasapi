@@ -34,7 +34,11 @@ const JwtService = require("./interfaces/http/auth/JwtService");
 const jwtService = new JwtService();
 const {ProductRepositoryMongo, ProductModel} = require("./infra/repositories/productRepositoryMongo");
 const CriarVendaPDVUseCase = require("./application/use-cases/CriarVendaPDVUseCase");
-const {VendaRepositoryMongo, VendaModel} = require("./infra/repositories/VendaRepositoryMongo");
+const VendaRepositoryMongo = require(
+  "./infra/repositories/VendaRepositoryMongo"
+);
+
+const VendaModel = VendaRepositoryMongo.VendaModel;
 // Importe também o repositório e o caso de uso de cancelamento
 
 // usando os caminhos reais do seu projeto.
