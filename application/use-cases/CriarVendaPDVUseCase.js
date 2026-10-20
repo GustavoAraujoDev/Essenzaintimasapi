@@ -51,7 +51,7 @@ class CriarVendaPDVUseCase {
       let produto = produtosPorId.get(productId);
 
       if (!produto) {
-        produto = await this.productRepository.buscarPorId(
+        produto = await this.productRepository.findById(
           productId,
           companyId
         );
