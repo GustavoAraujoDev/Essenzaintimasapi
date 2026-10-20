@@ -33,7 +33,7 @@ const AuthMiddleware = require("./interfaces/http/auth/AuthMiddleware");
 const JwtService = require("./interfaces/http/auth/JwtService");
 const jwtService = new JwtService();
 const {ProductRepositoryMongo, ProductModel} = require("./infra/repositories/productRepositoryMongo");
-const CriarVendaPDVUseCase = require("./application/usecases/CriarVendaPDVUseCase");
+const CriarVendaPDVUseCase = require("./application/use-cases/CriarVendaPDVUseCase");
 const {VendaRepositoryMongo, VendaModel} = require("./infra/repositories/VendaRepositoryMongo");
 // Importe também o repositório e o caso de uso de cancelamento
 
