@@ -85,7 +85,11 @@ class CriarVendaPDVUseCase {
 
       // Não permite que o cliente escolha uma variante sem validar
       // sua existência, preço e estoque no repositório de produtos.
-      const sku = item.sku ? String(item.sku) : null;
+      // Valida a variante usando o ID real do SKU.
+
+      // O preço oficial é sempre consultado no produto do banco.
+
+      const sku = String(item.skuId || item.sku || "").trim() ||
 
       const precoUnitario = await this.obterPrecoValidado(
         produto,
