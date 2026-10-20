@@ -89,7 +89,7 @@ class CriarVendaPDVUseCase {
 
       // O preço oficial é sempre consultado no produto do banco.
 
-      const sku = String(item.skuId || item.sku || "").trim() ||
+      const sku = String(item.skuId || item.sku || "").trim();
 
       const precoUnitario = await this.obterPrecoValidado(
         produto,
