@@ -42,6 +42,7 @@ const {VendaRepositoryMongo, VendaModel} = require("./infra/repositories/VendaRe
 // Instancie o repositório de vendas
 
 const vendaRepository = new VendaRepositoryMongo();
+const productRepository = new ProductRepositoryMongo();
 
 // Instancie o caso de uso
 
