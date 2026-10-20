@@ -29,8 +29,8 @@ const TaxaRoutes = require("./interfaces/http/routes/taxaRoutes");
 const VeiculoRoutes = require("./interfaces/http/routes/motoboy-routes");
 const criarVendaPDVRoutes = require("./interfaces/http/routes/vendaPDVRoutes");
 const connectToDatabase = require("./infra/database/mongodb/mongodb-connection");
-const AuthMiddleware = require("../auth/AuthMiddleware");
-const JwtService = require("../auth/JwtService");
+const AuthMiddleware = require("./interfaces/http/auth/AuthMiddleware");
+const JwtService = require("./interfaces/http/auth/JwtService");
 const jwtService = new JwtService();
 
 /**
