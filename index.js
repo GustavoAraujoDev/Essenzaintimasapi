@@ -32,9 +32,9 @@ const connectToDatabase = require("./infra/database/mongodb/mongodb-connection")
 const AuthMiddleware = require("./interfaces/http/auth/AuthMiddleware");
 const JwtService = require("./interfaces/http/auth/JwtService");
 const jwtService = new JwtService();
-const {ProductRepositoryMongo} = require("./infra/repositories/productRepositoryMongo");
+const {ProductRepositoryMongo, ProductModel} = require("./infra/repositories/productRepositoryMongo");
 const CriarVendaPDVUseCase = require("./application/usecases/CriarVendaPDVUseCase");
-const {ProductRepositoryMongo} = require("./infra/repositories/VendaRepositoryMongo");
+const {VendaRepositoryMongo, VendaModel} = require("./infra/repositories/VendaRepositoryMongo");
 // Importe também o repositório e o caso de uso de cancelamento
 
 // usando os caminhos reais do seu projeto.
