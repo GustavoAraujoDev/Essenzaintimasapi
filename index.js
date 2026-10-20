@@ -27,6 +27,7 @@ const pedidoRoutes = require("./interfaces/http/routes/pedido-routes");
 const CupomRoutes = require("./interfaces/http/routes/CupomRoutes");
 const TaxaRoutes = require("./interfaces/http/routes/taxaRoutes");
 const VeiculoRoutes = require("./interfaces/http/routes/motoboy-routes");
+const criarVendaPDVRoutes = require("./interfaces/http/routes/vendaPDVRoutes");
 const connectToDatabase = require("./infra/database/mongodb/mongodb-connection");
 
 /**
