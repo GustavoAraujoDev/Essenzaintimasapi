@@ -34,10 +34,10 @@ const JwtService = require("./interfaces/http/auth/JwtService");
 const jwtService = new JwtService();
 const {ProductRepositoryMongo, ProductModel} = require("./infra/repositories/productRepositoryMongo");
 const CriarVendaPDVUseCase = require("./application/use-cases/CriarVendaPDVUseCase");
+const CancelarVendaPDVUseCase = require("./application/use-cases/CancelarVendaPDVUseCase");
 const VendaRepositoryMongo = require(
   "./infra/repositories/VendaRepositoryMongo"
 );
-
 const VendaModel = VendaRepositoryMongo.VendaModel;
 // Importe também o repositório e o caso de uso de cancelamento
 
@@ -51,6 +51,14 @@ const productRepository = new ProductRepositoryMongo();
 // Instancie o caso de uso
 
 const criarVendaUseCase = new CriarVendaPDVUseCase(
+
+  vendaRepository,
+
+  productRepository
+
+);
+
+const cancelarVendaUseCase = new CancelarVendaPDVUseCase(
 
   vendaRepository,
 
