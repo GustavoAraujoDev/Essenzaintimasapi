@@ -89,14 +89,16 @@ class CriarVendaPDVUseCase {
 
       // O preço oficial é sempre consultado no produto do banco.
 
-      const sku = String(item.skuId || item.sku || "").trim();
+      
+const sku = String(
+  item.skuId || item.sku || ""
+).trim() || null;
 
-      const precoUnitario = await this.obterPrecoValidado(
-        produto,
-        sku,
-        preco,
-        companyId
-      );
+const precoUnitario = await this.obterPrecoValidado(
+  produto,
+  sku,
+  produto.preco ?? produto.price ?? null
+);
 
       itens.push({
         productId,
@@ -236,35 +238,36 @@ class CriarVendaPDVUseCase {
   }
 
   
+
 async obterPrecoValidado(produto, sku, precoPadrao = null) {
-  if (!sku) {
-    const preco = Number(precoPadrao);
+  const variantes = produto.skus || produto.variantes || [];
+
+  if (sku) {
+    const skuId = String(sku).trim();
+
+    const variante = variantes.find(
+      (v) => String(v._id || v.id || "") === skuId
+    );
+
+    if (!variante) {
+      throw new Error(
+        `SKU ${skuId} não pertence ao produto ${produto.id || produto._id}.`
+      );
+    }
+
+    const preco = Number(variante.price ?? variante.preco);
 
     if (!Number.isFinite(preco) || preco < 0) {
-      throw new Error("Preço do produto inválido.");
+      throw new Error(`Preço inválido para o SKU ${skuId}.`);
     }
 
     return preco;
   }
 
-  const variantes = produto.variantes || produto.skus || [];
-
-  const skuId = String(sku).trim();
-
-  const variante = variantes.find((v) =>
-    String(v._id || v.id || "") === skuId
-  );
-
-  if (!variante) {
-    throw new Error(
-      `SKU ${skuId} não pertence ao produto ${produto.id || produto._id}.`
-    );
-  }
-
-  const preco = Number(variante.preco ?? variante.price);
+  const preco = Number(precoPadrao);
 
   if (!Number.isFinite(preco) || preco < 0) {
-    throw new Error(`Preço inválido para o SKU ${skuId}.`);
+    throw new Error("Preço do produto inválido.");
   }
 
   return preco;
