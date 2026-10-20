@@ -1,6 +1,6 @@
 
 const mongoose = require("mongoose");
-const VendaRepository = require("../../domain/entities/vendaRepository");
+const VendaRepository = require("../../domain/entities/VendaRepository");
 
 // ============================================================
 // SUBSCHEMAS
