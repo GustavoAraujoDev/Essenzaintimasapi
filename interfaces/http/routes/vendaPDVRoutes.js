@@ -28,8 +28,7 @@ function criarVendaPDVRoutes({
   router.get("/operadores", controller.vendasPorOperador);
   router.get("/pagamentos", controller.vendasPorPagamento);
   router.get("/categorias", controller.vendasPorCategoria);
-  router.get("/status/resumo", controller.resumoPorStatus);
-
+  router.get("/status/resumo", controller.contarPorStatus);
   router.post("/", controller.criar);
   router.get("/", controller.listar);
   router.get("/:id", controller.buscarPorId);
