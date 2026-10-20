@@ -231,24 +231,40 @@ class CriarVendaPDVUseCase {
     return venda;
   }
 
-  async obterPrecoValidado(produto, sku, precoPadrao) {
-    if (!sku) return precoPadrao;
-
-    const variantes = produto.variantes || produto.skus || [];
-    const variante = variantes.find((v) => String(v.sku) === sku);
-
-    if (!variante) {
-      throw new Error(`SKU ${sku} não pertence ao produto selecionado.`);
-    }
-
-    const preco = Number(variante.preco ?? variante.price);
+  
+async obterPrecoValidado(produto, sku, precoPadrao = null) {
+  if (!sku) {
+    const preco = Number(precoPadrao);
 
     if (!Number.isFinite(preco) || preco < 0) {
-      throw new Error(`Preço inválido para o SKU ${sku}.`);
+      throw new Error("Preço do produto inválido.");
     }
 
     return preco;
   }
+
+  const variantes = produto.variantes || produto.skus || [];
+
+  const skuId = String(sku).trim();
+
+  const variante = variantes.find((v) =>
+    String(v._id || v.id || "") === skuId
+  );
+
+  if (!variante) {
+    throw new Error(
+      `SKU ${skuId} não pertence ao produto ${produto.id || produto._id}.`
+    );
+  }
+
+  const preco = Number(variante.preco ?? variante.price);
+
+  if (!Number.isFinite(preco) || preco < 0) {
+    throw new Error(`Preço inválido para o SKU ${skuId}.`);
+  }
+
+  return preco;
+}
 }
 
 module.exports = CriarVendaPDVUseCase;
