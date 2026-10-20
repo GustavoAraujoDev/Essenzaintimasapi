@@ -52,8 +52,7 @@ class CriarVendaPDVUseCase {
 
       if (!produto) {
         produto = await this.productRepository.findById(
-          productId,
-          companyId
+          productId
         );
 
         if (!produto) {
