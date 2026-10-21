@@ -1,3 +1,5 @@
+const VendaPDVPolicy = require("../../domain/policies/VendaPDVPolicy");
+
 class CriarVendaPDVUseCase {
   constructor(vendaRepository, productRepository, estoqueService = null) {
     this.vendaRepository = vendaRepository;
