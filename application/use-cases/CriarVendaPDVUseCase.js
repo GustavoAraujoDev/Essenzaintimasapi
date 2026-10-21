@@ -82,50 +82,85 @@ class CriarVendaPDVUseCase {
     });
     return resultado;
   }
+  
   // =========================================================
   // EXECUTAR VENDA
   // =========================================================
   async executar(dados, contexto) {
-    const inicio = Date.now();
-    this.log("VENDA_INICIADA", {
-      data: new Date().toISOString(),
-      contexto: {
-        userId: contexto?.userId || null,
-        companyId: contexto?.companyId || null,
-        nomeOperador: contexto?.nomeOperador || null,
-      },
-      dados: {
-        quantidadeItens: Array.isArray(dados?.itens)
-          ? dados.itens.length
-          : null,
-        quantidadePagamentos: Array.isArray(dados?.pagamentos)
-          ? dados.pagamentos.length
-          : null,
-        desconto: dados?.desconto ?? 0,
-        acrescimo: dados?.acrescimo ?? 0,
-        origem: dados?.origem || null,
-        caixaId: dados?.caixaId || null,
-      },
-    });
-    try {
-      // -----------------------------------------------------
-      // 1. CONTEXTO
-      // -----------------------------------------------------
-      if (!contexto?.userId || !contexto?.companyId) {
-        this.log("CONTEXTO_INVALIDO", {
-          temUserId: Boolean(contexto?.userId),
-          temCompanyId: Boolean(contexto?.companyId),
-        });
-        throw new Error(
-          "Usuário autenticado e empresa são obrigatórios."
-        );
+     const inicio = Date.now();
+
+  this.log("VENDA_INICIADA", {
+    data: new Date().toISOString(),
+    userId: contexto?.userId || null,
+    companyId: contexto?.companyId || null,
+    nomeOperador: contexto?.nomeOperador || null,
+  });
+
+  try {
+    // -----------------------------------------------------
+    // 1. VALIDAR CONTEXTO AUTENTICADO
+    // -----------------------------------------------------
+
+    if (
+      !contexto?.userId ||
+      !contexto?.companyId ||
+      !contexto?.principal
+    ) {
+      throw new Error(
+        "Identidade autenticada e empresa são obrigatórias."
+      );
+    }
+
+    const { userId, companyId, nomeOperador } = contexto;
+    const principal = contexto.principal;
+
+    // A identidade do contexto precisa corresponder
+    // à identidade confiável usada na autorização.
+
+    const identidade = VendaPDVPolicy.validatePrincipal(
+      principal
+    );
+
+    if (!identidade.allowed) {
+      VendaPDVPolicy.assertCan(
+        principal,
+        VendaPDVPolicy.ACTION.CREATE,
+        { expectedCompanyId: companyId }
+      );
+    }
+
+    if (String(identidade.userId) !== String(userId)) {
+      throw new VendaPDVPolicy.AuthorizationError(
+        VendaPDVPolicy.REASON.INVALID_PRINCIPAL
+      );
+    }
+
+    // -----------------------------------------------------
+    // 2. AUTORIZAR CRIAÇÃO DA VENDA
+    // -----------------------------------------------------
+    VendaPDVPolicy.assertCan(
+      principal,
+      VendaPDVPolicy.ACTION.CREATE,
+      {
+        expectedCompanyId: companyId,
       }
-      const { userId, companyId, nomeOperador } = contexto;
-      this.log("CONTEXTO_VALIDADO", {
-        userId,
-        companyId,
-        nomeOperador: nomeOperador || null,
-      });
+    );
+
+    // A empresa e o operador autorizados devem ser
+    // os mesmos utilizados para registrar a venda.
+    if (String(identidade.companyId) !== String(companyId)) {
+      throw new VendaPDVPolicy.AuthorizationError(
+        VendaPDVPolicy.REASON.COMPANY_MISMATCH
+      );
+    }
+
+    this.log("VENDA_AUTORIZADA", {
+      userId: identidade.userId,
+      companyId: identidade.companyId,
+      role: identidade.role,
+      action: VendaPDVPolicy.ACTION.CREATE,
+    });
+
       // -----------------------------------------------------
       // 2. VALIDAR ITENS E PAGAMENTOS
       // -----------------------------------------------------
