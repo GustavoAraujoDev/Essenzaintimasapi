@@ -1,41 +1,100 @@
 
+"use strict";
+
+const VendaPDVPolicy = require("../../domain/policies/VendaPDVPolicy");
+
 class CancelarVendaPDVUseCase {
-  constructor(vendaRepository, estoqueService = null, pagamentoService = null) {
+  constructor(
+    vendaRepository,
+    estoqueService = null,
+    pagamentoService = null
+  ) {
+    if (!vendaRepository) {
+      throw new Error("O repositório de vendas é obrigatório.");
+    }
+
     this.vendaRepository = vendaRepository;
     this.estoqueService = estoqueService;
     this.pagamentoService = pagamentoService;
   }
 
-  async executar({ vendaId, motivo }, contexto) {
-    if (!contexto?.userId || !contexto?.companyId) {
-      throw new Error("Usuário autenticado e empresa são obrigatórios.");
+  async executar({ vendaId, motivo } = {}, contexto = {}) {
+    // 1. Validar os dados básicos do contexto autenticado.
+    if (
+      !contexto.userId ||
+      !contexto.companyId ||
+      !contexto.principal
+    ) {
+      throw new Error(
+        "Identidade autenticada, associação à empresa e empresa são obrigatórias."
+      );
     }
 
-    if (!vendaId) {
+    if (!vendaId || !String(vendaId).trim()) {
       throw new Error("Informe o identificador da venda.");
     }
 
-    if (!motivo || !String(motivo).trim()) {
+    const motivoNormalizado = String(motivo || "").trim();
+
+    if (!motivoNormalizado) {
       throw new Error("O motivo do cancelamento é obrigatório.");
     }
 
-    const { userId, companyId } = contexto;
+    const userId = String(contexto.userId);
+    const companyId = String(contexto.companyId);
+    const principal = contexto.principal;
 
+    // 2. Autorizar o cancelamento pela Policy.
+    // Somente ADMIN/OWNER pode cancelar vendas.
+    // STAFF/EMPLOYEE pode criar vendas, mas não cancelá-las.
+    const autorizacao = VendaPDVPolicy.assertCan(
+      principal,
+      VendaPDVPolicy.ACTION.CANCEL,
+      {
+        expectedCompanyId: companyId,
+      }
+    );
+
+    // 3. Garantir que o contexto e a identidade autorizada
+    // representam o mesmo usuário.
+    if (String(autorizacao.userId) !== userId) {
+      throw new VendaPDVPolicy.AuthorizationError(
+        VendaPDVPolicy.REASON.INVALID_PRINCIPAL
+      );
+    }
+
+    if (String(autorizacao.companyId) !== companyId) {
+      throw new VendaPDVPolicy.AuthorizationError(
+        VendaPDVPolicy.REASON.COMPANY_MISMATCH
+      );
+    }
+
+    // 4. Buscar a venda dentro da empresa autorizada.
     const venda = await this.vendaRepository.buscarPorId(
-      vendaId,
+      String(vendaId).trim(),
       companyId
     );
 
-    if (venda.origem !== "PDV") {
-      throw new Error("Esta operação só permite cancelar vendas do PDV.");
+    if (!venda) {
+      throw new Error("Venda não encontrada nesta empresa.");
     }
 
+    // 5. Garantir que a operação é exclusiva para vendas do PDV.
+    if (venda.origem !== "PDV") {
+      throw new Error(
+        "Esta operação só permite cancelar vendas do PDV."
+      );
+    }
+
+    // 6. Validar o estado atual da venda.
     if (venda.status === "CANCELADA") {
       throw new Error("Esta venda já foi cancelada.");
     }
 
     if (venda.status === "DEVOLVIDA") {
-      throw new Error("Esta venda já foi devolvida integralmente.");
+      throw new Error(
+        "Esta venda já foi devolvida integralmente."
+      );
     }
 
     if (venda.status === "PARCIALMENTE_DEVOLVIDA") {
@@ -44,12 +103,16 @@ class CancelarVendaPDVUseCase {
       );
     }
 
-    if (venda.status !== "CONCLUIDA" && venda.status !== "PENDENTE") {
-      throw new Error("O status atual não permite cancelamento.");
+    if (
+      venda.status !== "CONCLUIDA" &&
+      venda.status !== "PENDENTE"
+    ) {
+      throw new Error(
+        "O status atual não permite cancelamento."
+      );
     }
 
-    // Para pagamentos já capturados, o serviço deve confirmar o
-    // estorno antes de considerar o processo financeiro concluído.
+    // 7. Validar o cancelamento financeiro antes de alterar a venda.
     if (this.pagamentoService) {
       await this.pagamentoService.validarCancelamento({
         venda,
@@ -58,34 +121,45 @@ class CancelarVendaPDVUseCase {
       });
     }
 
+    // 8. Persistir o cancelamento.
+    // O repositório deve garantir que apenas uma operação concorrente
+    // consiga cancelar a mesma venda.
     const cancelada = await this.vendaRepository.cancelar(
-      venda.id,
+      venda.id || venda._id || vendaId,
       companyId,
       userId,
-      String(motivo).trim()
+      motivoNormalizado
     );
 
-    // A devolução ao estoque deve ser idempotente: executar duas
-    // vezes para a mesma venda não pode repor os produtos em dobro.
+    if (!cancelada) {
+      throw new Error(
+        "Não foi possível confirmar o cancelamento da venda."
+      );
+    }
+
+    // 9. Repor o estoque de maneira idempotente.
+    // O serviço deve impedir reposições duplicadas da mesma venda.
     if (this.estoqueService) {
       await this.estoqueService.reporItens({
         companyId,
-        vendaId: venda.id,
+        vendaId: String(venda.id || venda._id || vendaId),
         operadorId: userId,
-        itens: venda.itens,
-        motivo: String(motivo).trim(),
+        itens: venda.itens || [],
+        motivo: motivoNormalizado,
       });
     }
 
+    // 10. Estornar pagamentos, quando aplicável.
     if (this.pagamentoService) {
       await this.pagamentoService.estornarSeAplicavel({
         venda: cancelada,
         companyId,
         operadorId: userId,
-        motivo: String(motivo).trim(),
+        motivo: motivoNormalizado,
       });
     }
 
+    // 11. Retornar o resultado.
     return {
       mensagem: "Venda cancelada.",
       venda: cancelada,
