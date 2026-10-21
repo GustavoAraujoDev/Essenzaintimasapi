@@ -16,6 +16,7 @@ const authMiddleware = AuthMiddleware(
   membershipRepository
 );
 
+router.use(authMiddleware);
 // CRUD Admin
 router.post("/admin/coupons", CouponController.create);
 router.get("/admin/coupons", CouponController.getAll);
