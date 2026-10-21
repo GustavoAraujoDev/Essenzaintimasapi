@@ -12,6 +12,17 @@ const printerservice = new EpsonPrinterService();
 // Assim, quando o /connect guardar o IP aqui dentro, o Controller terá acesso imediato!
 PedidoController.printerService = printerservice;
 
+const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
+const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
+const userRepository = new UserRepositoryMongo();
+const membershipRepository = new MembershipRepositoryMongo();
+
+const authMiddleware = AuthMiddleware(
+  jwtService,
+  userRepository,
+  membershipRepository
+);
+
 /**
  * @route   GET /api/printers/discover
  * @desc    Varre a rede local à procura de impressoras térmicas ativas
@@ -216,7 +227,7 @@ router.post(
 /* =========================
    MIDDLEWARE DE AUTENTICAÇÃO
 ========================= */
-router.use(AuthMiddleware(jwtService));
+router.use(authMiddleware);
 
 /**
  * @swagger
