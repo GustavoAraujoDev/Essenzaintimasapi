@@ -60,8 +60,8 @@ const cancelarVendaUseCase = new CancelarVendaPDVUseCase(
   productRepository
 );
 
-const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
-const MembershipRepositoryMongo = require("../../../infra/repositories/MembershipRepositoryMongo");
+const { UserRepositoryMongo } = require( "./infra/repositories/UserRepositoryMongo");
+const MembershipRepositoryMongo = require("./infra/repositories/MembershipRepositoryMongo");
 const userRepository = new UserRepositoryMongo();
 const membershipRepository = new MembershipRepositoryMongo();
 
