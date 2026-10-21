@@ -176,7 +176,7 @@ router.post(
     }
 
     console.log("-> Não é CUSTOMER: Exigindo token via AuthMiddleware.");
-    return authMiddleware(jwtService)(req, res, next);
+    return authMiddleware (req, res, next);
   },
   (req, res) => ProductController.Registrer(req, res),
 );
@@ -198,7 +198,7 @@ router.get("/", ProductController.getAll);
 /* =========================
    MIDDLEWARE DE AUTENTICAÇÃO
 ========================= */
-router.use(authMiddleware(jwtService));
+router.use(authMiddleware);
 
 /* =========================
    ROTAS PROTEGIDAS
