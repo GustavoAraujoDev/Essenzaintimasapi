@@ -2,6 +2,16 @@
 const express = require("express");
 const router = express.Router();
 const CouponController = require("../controllers/CupomController");
+const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
+const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
+const userRepository = new UserRepositoryMongo();
+const membershipRepository = new MembershipRepositoryMongo();
+
+const authMiddleware = AuthMiddleware(
+  jwtService,
+  userRepository,
+  membershipRepository
+);
 
 // CRUD Admin
 router.post("/admin/coupons", CouponController.create);
