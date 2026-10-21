@@ -7,6 +7,16 @@ const ProductValidator = require("../../../application/validators/productValidat
 const AuthMiddleware = require("../auth/AuthMiddleware");
 const JwtService = require("../auth/JwtService");
 const jwtService = new JwtService();
+const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
+const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
+const userRepository = new UserRepositoryMongo();
+const membershipRepository = new MembershipRepositoryMongo();
+
+const authMiddleware = AuthMiddleware(
+  jwtService,
+  userRepository,
+  membershipRepository
+);
 
 const TableStatus = require("../../../infra/repositories/TableStatusRepositoryMongo");
 
@@ -166,7 +176,7 @@ router.post(
     }
 
     console.log("-> Não é CUSTOMER: Exigindo token via AuthMiddleware.");
-    return AuthMiddleware(jwtService)(req, res, next);
+    return authMiddleware(jwtService)(req, res, next);
   },
   (req, res) => ProductController.Registrer(req, res),
 );
@@ -188,7 +198,7 @@ router.get("/", ProductController.getAll);
 /* =========================
    MIDDLEWARE DE AUTENTICAÇÃO
 ========================= */
-router.use(AuthMiddleware(jwtService));
+router.use(authMiddleware(jwtService));
 
 /* =========================
    ROTAS PROTEGIDAS
