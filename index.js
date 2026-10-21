@@ -51,22 +51,25 @@ const productRepository = new ProductRepositoryMongo();
 // Instancie o caso de uso
 
 const criarVendaUseCase = new CriarVendaPDVUseCase(
-
   vendaRepository,
-
   productRepository
-
 );
-
+ 
 const cancelarVendaUseCase = new CancelarVendaPDVUseCase(
-
   vendaRepository,
-
   productRepository
-
 );
 
-// 
+const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
+const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
+const userRepository = new UserRepositoryMongo();
+const membershipRepository = new MembershipRepositoryMongo();
+
+const authMiddleware = AuthMiddleware(
+  jwtService,
+  userRepository,
+  membershipRepository
+);
 
 /**
 
@@ -191,7 +194,7 @@ app.use(
     criarVendaUseCase,
     cancelarVendaUseCase,
     vendaRepository,
-    authMiddleware: AuthMiddleware(jwtService),
+    authMiddleware: authMiddleware,
   })
 );
 
