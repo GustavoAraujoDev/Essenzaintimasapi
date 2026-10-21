@@ -13,7 +13,7 @@ const printerservice = new EpsonPrinterService();
 PedidoController.printerService = printerservice;
 
 const { UserRepositoryMongo } = require( "../../../infra/repositories/UserRepositoryMongo");
-const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
+const MembershipRepositoryMongo = require("../../../infra/repositories/MembershipRepositoryMongo");
 const userRepository = new UserRepositoryMongo();
 const membershipRepository = new MembershipRepositoryMongo();
 
