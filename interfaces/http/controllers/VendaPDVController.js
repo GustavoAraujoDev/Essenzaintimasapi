@@ -27,39 +27,36 @@ class VendaPDVController {
 
   // Nunca confie no companyId ou operadorId enviado pelo front-end.
   contexto(req) {
-    const usuario = req.user;
+  const usuario = req.user;
 
-    if (!usuario) {
-      const erro = new Error("Autenticação obrigatória.");
-      erro.statusCode = 401;
-      throw erro;
-    }
-
-    const userId = usuario.id || usuario.userId || usuario._id;
-
-    const companyId =
-      usuario.companyId ||
-      usuario.membership?.companyId;
-
-    if (!userId || !companyId) {
-      const erro = new Error(
-        "Não foi possível identificar o usuário e a empresa autenticados."
-      );
-      erro.statusCode = 403;
-      throw erro;
-    }
-
-    return {
-      userId: String(userId),
-      companyId: String(companyId),
-      nomeOperador:
-        usuario.profile?.name ||
-        usuario.nome ||
-        usuario.name ||
-        null,
-      role: usuario.role,
-    };
+  if (!usuario?.id || !usuario?.companyId || !usuario?.membership) {
+    const erro = new Error(
+      "Identidade autenticada e associação à empresa são obrigatórias."
+    );
+    erro.statusCode = 403;
+    throw erro;
   }
+
+  return {
+    userId: String(usuario.id),
+    companyId: String(usuario.companyId),
+    nomeOperador:
+      usuario.profile?.name ||
+      usuario.nome ||
+      usuario.name ||
+      null,
+    role: usuario.membership.role,
+    principal: {
+      userId: String(usuario.id),
+      userStatus: usuario.status,
+      membership: {
+        role: usuario.membership.role,
+        status: usuario.membership.status,
+        companyId: String(usuario.membership.companyId),
+      },
+    },
+  };
+}
 
   respostaErro(res, erro) {
     const status = erro.statusCode || 400;
