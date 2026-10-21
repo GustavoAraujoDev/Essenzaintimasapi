@@ -105,26 +105,43 @@ class VendaPDVController {
     }
   }
 
-  async cancelar(req, res) {
-    try {
-      const contexto = this.contexto(req);
+  
+async cancelar(req, res) {
+  try {
+    const contexto = this.contexto(req);
 
-      const resultado = await this.cancelarVendaUseCase.executar(
-        {
-          vendaId: req.params.id,
-          motivo: req.body.motivo,
-        },
-        contexto
-      );
+    console.log("[CANCELAR VENDA] Requisição recebida:", {
+      vendaId: req.params.id,
+      motivo: req.body?.motivo,
+      userId: contexto?.userId,
+      companyId: contexto?.companyId,
+    });
 
-      return res.status(200).json({
-        sucesso: true,
-        ...resultado,
-      });
-    } catch (erro) {
-      return this.respostaErro(res, erro);
-    }
+    const resultado = await this.cancelarVendaUseCase.executar(
+      {
+        vendaId: req.params.id,
+        motivo: req.body?.motivo,
+      },
+      contexto
+    );
+
+    console.log("[CANCELAR VENDA] Sucesso:", resultado);
+
+    return res.status(200).json({
+      sucesso: true,
+      ...resultado,
+    });
+  } catch (erro) {
+    console.error("[CANCELAR VENDA] Erro:", {
+      message: erro.message,
+      name: erro.name,
+      stack: erro.stack,
+    });
+
+    return this.respostaErro(res, erro);
   }
+}
+
 
   async buscarPorId(req, res) {
     try {
