@@ -6,6 +6,9 @@ const { UserRepositoryMongo } = require( "../../../infra/repositories/UserReposi
 const MembershipRepositoryMongo = require("/../../../infra/repositories/MembershipRepositoryMongo");
 const userRepository = new UserRepositoryMongo();
 const membershipRepository = new MembershipRepositoryMongo();
+const AuthMiddleware = require("../auth/AuthMiddleware");
+const JwtService = require("../auth/JwtService");
+const jwtService = new JwtService();
 
 const authMiddleware = AuthMiddleware(
   jwtService,
