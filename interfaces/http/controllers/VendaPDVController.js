@@ -80,6 +80,18 @@ class VendaPDVController {
   async criar(req, res) {
     try {
       const contexto = this.contexto(req);
+      
+      console.log("DEBUG CONTEXTO PDV:", {
+
+  user: req.user || null,
+
+  userId: req.user?.id || req.user?._id || null,
+
+  companyId: req.user?.companyId || null,
+
+  membership: req.user?.membership || null,
+
+});
 
       const venda = await this.criarVendaUseCase.executar(
         req.body,
