@@ -1,21 +1,24 @@
-
 "use strict";
 
 const VendaPDVPolicy = require("../../domain/policies/VendaPDVPolicy");
+const Product = require("../../domain/entities/product");
+const ProductStockAddedEvent = require("../../domain/events/ProductStockAddedEvent"); // Ou um evento de restituição/devolução caso possua
 
 class CancelarVendaPDVUseCase {
   constructor(
     vendaRepository,
-    estoqueService = null,
-    pagamentoService = null
+    productRepo = null,
+    pagamentoService = null,
+    eventDispatcher = null
   ) {
     if (!vendaRepository) {
       throw new Error("O repositório de vendas é obrigatório.");
     }
 
     this.vendaRepository = vendaRepository;
-    this.estoqueService = estoqueService;
+    this.productRepo = productRepo;
     this.pagamentoService = pagamentoService;
+    this.eventDispatcher = eventDispatcher;
   }
 
   async executar({ vendaId, motivo } = {}, contexto = {}) {
@@ -45,8 +48,6 @@ class CancelarVendaPDVUseCase {
     const principal = contexto.principal;
 
     // 2. Autorizar o cancelamento pela Policy.
-    // Somente ADMIN/OWNER pode cancelar vendas.
-    // STAFF/EMPLOYEE pode criar vendas, mas não cancelá-las.
     const autorizacao = VendaPDVPolicy.assertCan(
       principal,
       VendaPDVPolicy.ACTION.CANCEL,
@@ -55,8 +56,7 @@ class CancelarVendaPDVUseCase {
       }
     );
 
-    // 3. Garantir que o contexto e a identidade autorizada
-    // representam o mesmo usuário.
+    // 3. Garantir alinhamento de contexto e identidade.
     if (String(autorizacao.userId) !== userId) {
       throw new VendaPDVPolicy.AuthorizationError(
         VendaPDVPolicy.REASON.INVALID_PRINCIPAL
@@ -121,9 +121,7 @@ class CancelarVendaPDVUseCase {
       });
     }
 
-    // 8. Persistir o cancelamento.
-    // O repositório deve garantir que apenas uma operação concorrente
-    // consiga cancelar a mesma venda.
+    // 8. Persistir o cancelamento da venda.
     const cancelada = await this.vendaRepository.cancelar(
       venda.id || venda._id || vendaId,
       companyId,
@@ -137,16 +135,52 @@ class CancelarVendaPDVUseCase {
       );
     }
 
-    // 9. Repor o estoque de maneira idempotente.
-    // O serviço deve impedir reposições duplicadas da mesma venda.
-    if (this.estoqueService) {
-      await this.estoqueService.reporItens({
-        companyId,
-        vendaId: String(venda.id || venda._id || vendaId),
-        operadorId: userId,
-        itens: venda.itens || [],
-        motivo: motivoNormalizado,
-      });
+    // 9. Repor o estoque diretamente via productRepo usando a Entidade Product.
+    if (this.productRepo && Array.isArray(venda.itens) && venda.itens.length > 0) {
+      for (const item of venda.itens) {
+        const productId = item.productId || item.produtoId;
+        if (!productId) continue;
+
+        const productData = await this.productRepo.findById(productId);
+        if (!productData) continue;
+
+        const product = new Product(productData);
+        const oldStock = product.stock;
+
+        // Adiciona a quantidade do item devolvido ao estoque do SKU correspondente
+        const quantidade = item.quantidade || item.quantity || 0;
+        const skuId = item.skuId || null;
+
+        if (quantidade > 0) {
+          product.addStock(skuId, quantidade);
+          const newData = product.stock;
+
+          // Atualiza o produto
+          await this.productRepo.update(product);
+
+          // Dispara auditoria do estoque atualizado se houver eventDispatcher
+          if (this.eventDispatcher) {
+            await this.eventDispatcher.dispatch(
+              new ProductStockAddedEvent({
+                entity: "Product",
+                entityId: product.id,
+                userId,
+                userEmail: contexto.userEmail || principal?.email || "",
+                oldData: { stock: oldStock },
+                newData: { stock: newData },
+                snapshot: product,
+                status: "SUCCESS",
+                contexto: {
+                  ...contexto,
+                  origem: "CANCELAMENTO_VENDA_PDV",
+                  vendaId: venda.id || venda._id || vendaId,
+                  motivo: motivoNormalizado,
+                },
+              })
+            );
+          }
+        }
+      }
     }
 
     // 10. Estornar pagamentos, quando aplicável.
@@ -161,7 +195,7 @@ class CancelarVendaPDVUseCase {
 
     // 11. Retornar o resultado.
     return {
-      mensagem: "Venda cancelada.",
+      mensagem: "Venda cancelada e estoque recomposto.",
       venda: cancelada,
     };
   }
