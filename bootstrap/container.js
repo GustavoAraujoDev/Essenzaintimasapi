@@ -5,7 +5,7 @@ const EventDispatcher = require("../infra/audit/EventDispatcher");
 const AuditLogHandler = require("../infra/audit/handlers/AuditLogHandler");
 const AuditRepositoryMongo = require("../infra/repositories/AuditRepositoryMongo");
 
-const ProductRepositoryMongo = require("../infra/repositories/productRepositoryMongo");
+const { ProductRepositoryMongo } = require("../infra/repositories/productRepositoryMongo");
 const RestoreStockOnSaleCancelledHandler = require(
   "../infra/audit/handlers/RestoreStockOnSaleCancelledHandler"
 );
