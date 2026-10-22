@@ -16,23 +16,11 @@ class RestoreStockOnSaleCancelledHandler {
       return;
     }
 
-    console.log(
-  "[DEBUG CANCELAMENTO - ITENS DA VENDA]",
-  JSON.stringify(venda.itens, null, 2)
-);
-
     for (const item of venda.itens) {
       const productId = item.productId || item.produtoId;
       const quantity = Number(item.quantidade || item.quantity || 0);
-      const skuOriginal =
-  item.skuId ??
-  item.sku?._id ??
-  item.sku?.id ??
-  item.sku ??
-  null;
-
-const skuId =
-  skuOriginal == null ? null : String(skuOriginal).trim();
+      const skuOriginal = item.skuId ?? item.sku?._id ?? item.sku?.id ?? item.sku ?? null;
+      const skuId = skuOriginal == null ? null : String(skuOriginal).trim();
 
       if (!productId || quantity <= 0) continue;
 
