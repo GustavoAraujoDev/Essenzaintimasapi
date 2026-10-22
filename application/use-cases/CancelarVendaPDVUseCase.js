@@ -149,6 +149,22 @@ class CancelarVendaPDVUseCase {
       );
     }
 
+    console.log(
+
+  "[ETAPA 1] Itens originais da venda:",
+
+  JSON.stringify(venda.itens, null, 2)
+
+);
+
+console.log(
+
+  "[ETAPA 2] Itens enviados ao evento:",
+
+  JSON.stringify(vendaParaEvento.itens, null, 2)
+
+);
+
     // 10. Disparar o evento de cancelamento.
     // O handler será responsável por repor o estoque
     // e registrar a auditoria dos produtos atualizados.
