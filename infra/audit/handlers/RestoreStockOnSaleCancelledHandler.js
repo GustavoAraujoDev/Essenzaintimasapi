@@ -16,6 +16,11 @@ class RestoreStockOnSaleCancelledHandler {
       return;
     }
 
+    console.log(
+  "[DEBUG CANCELAMENTO - ITENS DA VENDA]",
+  JSON.stringify(venda.itens, null, 2)
+);
+
     for (const item of venda.itens) {
       const productId = item.productId || item.produtoId;
       const quantity = Number(item.quantidade || item.quantity || 0);
@@ -32,13 +37,13 @@ class RestoreStockOnSaleCancelledHandler {
         const product = new Product(productData);
         const oldStock = product.stock;
 
-        console.log("[DEBUG ADD STOCK]", {
+        console.log("[DEBUG REPOSIÇÃO DE ESTOQUE]", {
   productId,
   skuId,
   quantity,
-  skus: product.skus.map((sku) => ({
-    id: sku.id,
-    _id: sku._id,
+  skusDoProduto: product.skus.map((sku) => ({
+    id: sku.id ?? null,
+    _id: sku._id ?? null,
     stock: sku.stock,
   })),
 });
