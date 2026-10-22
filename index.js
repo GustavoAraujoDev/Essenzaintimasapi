@@ -39,6 +39,7 @@ const VendaRepositoryMongo = require(
   "./infra/repositories/VendaRepositoryMongo"
 );
 const VendaModel = VendaRepositoryMongo.VendaModel;
+const { eventDispatcher } = require("./bootstrap/container");
 // Importe também o repositório e o caso de uso de cancelamento
 
 // usando os caminhos reais do seu projeto.
