@@ -1,7 +1,7 @@
 "use strict";
 
-const Product = require("../../domain/entities/product");
-const ProductStockAddedEvent = require("../../domain/events/ProductStockAddedEvent");
+const Product = require("../../../domain/entities/product");
+const ProductStockAddedEvent = require("../../../domain/events/ProductStockAddedEvent");
 
 class RestoreStockOnSaleCancelledHandler {
   constructor(productRepo, eventDispatcher) {
