@@ -157,14 +157,6 @@ class CancelarVendaPDVUseCase {
 
 );
 
-console.log(
-
-  "[ETAPA 2] Itens enviados ao evento:",
-
-  JSON.stringify(vendaParaEvento.itens, null, 2)
-
-);
-
     // 10. Disparar o evento de cancelamento.
     // O handler será responsável por repor o estoque
     // e registrar a auditoria dos produtos atualizados.
@@ -177,6 +169,14 @@ console.log(
       itens: venda.itens,
     };
 
+    console.log(
+
+  "[ETAPA 2] Itens enviados ao evento:",
+
+  JSON.stringify(vendaParaEvento.itens, null, 2)
+
+);
+    
     await this.eventDispatcher.dispatch(
       new SaleCancelledEvent({
         venda: vendaParaEvento,
