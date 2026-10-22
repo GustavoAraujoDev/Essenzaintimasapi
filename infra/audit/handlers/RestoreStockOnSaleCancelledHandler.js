@@ -32,6 +32,17 @@ class RestoreStockOnSaleCancelledHandler {
         const product = new Product(productData);
         const oldStock = product.stock;
 
+        console.log("[DEBUG ADD STOCK]", {
+  productId,
+  skuId,
+  quantity,
+  skus: product.skus.map((sku) => ({
+    id: sku.id,
+    _id: sku._id,
+    stock: sku.stock,
+  })),
+});
+
         // Reutiliza o método seguro da entidade
         product.addStock(skuId, quantity);
         const newData = product.stock;
