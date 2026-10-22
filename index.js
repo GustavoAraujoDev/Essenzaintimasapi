@@ -57,7 +57,9 @@ const criarVendaUseCase = new CriarVendaPDVUseCase(
  
 const cancelarVendaUseCase = new CancelarVendaPDVUseCase(
   vendaRepository,
-  productRepository
+  productRepository, // <-- NOVO: Repositório de produtos para repor o estoque
+  pagamentoService,  // (opcional ou null)
+  eventDispatcher    // (opcional ou null para auditoria)
 );
 
 const { UserRepositoryMongo } = require( "./infra/repositories/UserRepositoryMongo");
