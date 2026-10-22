@@ -7,7 +7,7 @@ const AuditRepositoryMongo = require("../infra/repositories/AuditRepositoryMongo
 
 const ProductRepositoryMongo = require("../infra/repositories/ProductRepositoryMongo");
 const RestoreStockOnSaleCancelledHandler = require(
-  "../application/handlers/RestoreStockOnSaleCancelledHandler"
+  "../infra/audit/handlers/RestoreStockOnSaleCancelledHandler"
 );
 
 const eventDispatcher = new EventDispatcher();
