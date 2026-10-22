@@ -1,13 +1,15 @@
+
 "use strict";
 
 const VendaPDVPolicy = require("../../domain/policies/VendaPDVPolicy");
-const Product = require("../../domain/entities/product");
-const ProductStockAddedEvent = require("../../domain/events/ProductStockAddedEvent"); // Ou um evento de restituição/devolução caso possua
+const SaleCancelledEvent = require(
+  "../../domain/events/SaleCancelledEvent"
+);
 
 class CancelarVendaPDVUseCase {
   constructor(
     vendaRepository,
-    productRepo = null,
+    productRepo = null, // Mantido temporariamente para compatibilidade
     pagamentoService = null,
     eventDispatcher = null
   ) {
@@ -16,13 +18,12 @@ class CancelarVendaPDVUseCase {
     }
 
     this.vendaRepository = vendaRepository;
-    this.productRepo = productRepo;
     this.pagamentoService = pagamentoService;
     this.eventDispatcher = eventDispatcher;
   }
 
   async executar({ vendaId, motivo } = {}, contexto = {}) {
-    // 1. Validar os dados básicos do contexto autenticado.
+    // 1. Validar a identidade autenticada.
     if (
       !contexto.userId ||
       !contexto.companyId ||
@@ -47,7 +48,17 @@ class CancelarVendaPDVUseCase {
     const companyId = String(contexto.companyId);
     const principal = contexto.principal;
 
-    // 2. Autorizar o cancelamento pela Policy.
+    // 2. Validar a infraestrutura necessária antes de cancelar.
+    if (
+      !this.eventDispatcher ||
+      typeof this.eventDispatcher.dispatch !== "function"
+    ) {
+      throw new Error(
+        "EventDispatcher obrigatório para processar o cancelamento e a reposição de estoque."
+      );
+    }
+
+    // 3. Autorizar a operação pela Policy.
     const autorizacao = VendaPDVPolicy.assertCan(
       principal,
       VendaPDVPolicy.ACTION.CANCEL,
@@ -56,7 +67,7 @@ class CancelarVendaPDVUseCase {
       }
     );
 
-    // 3. Garantir alinhamento de contexto e identidade.
+    // 4. Validar o alinhamento da identidade e da empresa.
     if (String(autorizacao.userId) !== userId) {
       throw new VendaPDVPolicy.AuthorizationError(
         VendaPDVPolicy.REASON.INVALID_PRINCIPAL
@@ -69,7 +80,7 @@ class CancelarVendaPDVUseCase {
       );
     }
 
-    // 4. Buscar a venda dentro da empresa autorizada.
+    // 5. Buscar a venda dentro da empresa autorizada.
     const venda = await this.vendaRepository.buscarPorId(
       String(vendaId).trim(),
       companyId
@@ -79,14 +90,14 @@ class CancelarVendaPDVUseCase {
       throw new Error("Venda não encontrada nesta empresa.");
     }
 
-    // 5. Garantir que a operação é exclusiva para vendas do PDV.
+    // 6. Permitir exclusivamente vendas originadas no PDV.
     if (venda.origem !== "PDV") {
       throw new Error(
         "Esta operação só permite cancelar vendas do PDV."
       );
     }
 
-    // 6. Validar o estado atual da venda.
+    // 7. Validar o estado atual da venda.
     if (venda.status === "CANCELADA") {
       throw new Error("Esta venda já foi cancelada.");
     }
@@ -112,7 +123,7 @@ class CancelarVendaPDVUseCase {
       );
     }
 
-    // 7. Validar o cancelamento financeiro antes de alterar a venda.
+    // 8. Validar o cancelamento financeiro.
     if (this.pagamentoService) {
       await this.pagamentoService.validarCancelamento({
         venda,
@@ -121,9 +132,12 @@ class CancelarVendaPDVUseCase {
       });
     }
 
-    // 8. Persistir o cancelamento da venda.
+    // 9. Persistir o cancelamento antes de disparar o evento.
+    const vendaIdFinal =
+      venda.id || venda._id || String(vendaId).trim();
+
     const cancelada = await this.vendaRepository.cancelar(
-      venda.id || venda._id || vendaId,
+      vendaIdFinal,
       companyId,
       userId,
       motivoNormalizado
@@ -135,55 +149,35 @@ class CancelarVendaPDVUseCase {
       );
     }
 
-    // 9. Repor o estoque diretamente via productRepo usando a Entidade Product.
-    if (this.productRepo && Array.isArray(venda.itens) && venda.itens.length > 0) {
-      for (const item of venda.itens) {
-        const productId = item.productId || item.produtoId;
-        if (!productId) continue;
+    // 10. Disparar o evento de cancelamento.
+    // O handler será responsável por repor o estoque
+    // e registrar a auditoria dos produtos atualizados.
+    const vendaParaEvento = {
+      ...venda,
+      ...cancelada,
+      id: cancelada.id || cancelada._id || vendaIdFinal,
 
-        const productData = await this.productRepo.findById(productId);
-        if (!productData) continue;
+      // Preservar os itens originais vendidos.
+      itens: venda.itens,
+    };
 
-        const product = new Product(productData);
-        const oldStock = product.stock;
+    await this.eventDispatcher.dispatch(
+      new SaleCancelledEvent({
+        venda: vendaParaEvento,
+        contexto: {
+          ...contexto,
+          userId,
+          companyId,
+          userEmail:
+            contexto.userEmail || principal.email || "",
+          origem: "CANCELAMENTO_VENDA_PDV",
+          vendaId: String(vendaIdFinal),
+          motivo: motivoNormalizado,
+        },
+      })
+    );
 
-        // Adiciona a quantidade do item devolvido ao estoque do SKU correspondente
-        const quantidade = item.quantidade || item.quantity || 0;
-        const skuId = item.skuId || null;
-
-        if (quantidade > 0) {
-          product.addStock(skuId, quantidade);
-          const newData = product.stock;
-
-          // Atualiza o produto
-          await this.productRepo.update(product);
-
-          // Dispara auditoria do estoque atualizado se houver eventDispatcher
-          if (this.eventDispatcher) {
-            await this.eventDispatcher.dispatch(
-              new ProductStockAddedEvent({
-                entity: "Product",
-                entityId: product.id,
-                userId,
-                userEmail: contexto.userEmail || principal?.email || "",
-                oldData: { stock: oldStock },
-                newData: { stock: newData },
-                snapshot: product,
-                status: "SUCCESS",
-                contexto: {
-                  ...contexto,
-                  origem: "CANCELAMENTO_VENDA_PDV",
-                  vendaId: venda.id || venda._id || vendaId,
-                  motivo: motivoNormalizado,
-                },
-              })
-            );
-          }
-        }
-      }
-    }
-
-    // 10. Estornar pagamentos, quando aplicável.
+    // 11. Estornar pagamentos, quando aplicável.
     if (this.pagamentoService) {
       await this.pagamentoService.estornarSeAplicavel({
         venda: cancelada,
@@ -193,9 +187,10 @@ class CancelarVendaPDVUseCase {
       });
     }
 
-    // 11. Retornar o resultado.
+    // 12. Retornar o resultado.
     return {
-      mensagem: "Venda cancelada e estoque recomposto.",
+      mensagem:
+        "Venda cancelada. Evento de reposição de estoque processado.",
       venda: cancelada,
     };
   }
