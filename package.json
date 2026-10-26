@@ -42,6 +42,7 @@
     "express": "4.21.1",
     "fs": "^0.0.1-security",
     "joi": "^18.0.2",
+     "pdfkit": "^0.17.2",
     "jsdoc": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
     "local-devices": "^4.0.0",
