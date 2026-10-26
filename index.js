@@ -82,8 +82,6 @@ const criarRotasRelatorioVendas = require("./interfaces/http/routes/relatorioVen
 
 // Reutilize o middleware de autenticação já configurado no seu servidor.
 
-const vendaRepository = new VendaRepositoryMongo();
-
 const gerarRelatorioVendasUseCase = new GerarRelatorioVendasUseCase(vendaRepository);
 
 app.use(
