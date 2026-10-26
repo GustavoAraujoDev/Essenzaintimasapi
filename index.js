@@ -205,6 +205,15 @@ app.use("/veiculos", VeiculoRoutes);
 
 app.use(
   "/vendas",
+  criarRotasRelatorioVendas({
+    authMiddleware,
+    gerarRelatorioVendasUseCase,
+  })
+);
+
+
+app.use(
+  "/vendas",
   criarVendaPDVRoutes({
     criarVendaUseCase,
     cancelarVendaUseCase,
@@ -213,13 +222,6 @@ app.use(
   })
 );
 
-app.use(
-  "/vendas",
-  criarRotasRelatorioVendas({
-    authMiddleware,
-    gerarRelatorioVendasUseCase,
-  })
-);
 
 /**
  * =========================
