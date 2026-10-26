@@ -84,19 +84,7 @@ const criarRotasRelatorioVendas = require("./interfaces/http/routes/relatorioVen
 
 const gerarRelatorioVendasUseCase = new GerarRelatorioVendasUseCase(vendaRepository);
 
-app.use(
 
-  "/vendas",
-
-  criarRotasRelatorioVendas({
-
-    authMiddleware,
-
-    gerarRelatorioVendasUseCase,
-
-  })
-
-);
 
 /**
 
@@ -225,7 +213,13 @@ app.use(
   })
 );
 
-
+app.use(
+  "/vendas",
+  criarRotasRelatorioVendas({
+    authMiddleware,
+    gerarRelatorioVendasUseCase,
+  })
+);
 
 /**
  * =========================
