@@ -82,7 +82,7 @@ const GerarRelatorioVendasUseCase = require(
   "./application/GerarRelatorioVendasUseCase"
 );
 
-const criarRotasRelatorioVendas = require("./interface/http/routes/relatorioVendasRoutes");
+const criarRotasRelatorioVendas = require("./interfaces/http/routes/relatorioVendasRoutes");
 
 // Reutilize o middleware de autenticação já configurado no seu servidor.
 
