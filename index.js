@@ -74,6 +74,36 @@ const authMiddleware = AuthMiddleware(
   membershipRepository
 );
 
+const VendaRepositoryMongo = require(
+  "./infra/repositories/VendaRepositoryMongo"
+);
+
+const GerarRelatorioVendasUseCase = require(
+  "./application/GerarRelatorioVendasUseCase"
+);
+
+const criarRotasRelatorioVendas = require("./interface/http/routes/relatorioVendasRoutes");
+
+// Reutilize o middleware de autenticação já configurado no seu servidor.
+
+const vendaRepository = new VendaRepositoryMongo();
+
+const gerarRelatorioVendasUseCase = new GerarRelatorioVendasUseCase(vendaRepository);
+
+app.use(
+
+  "/vendas",
+
+  criarRotasRelatorioVendas({
+
+    authMiddleware,
+
+    gerarRelatorioVendasUseCase,
+
+  })
+
+);
+
 /**
 
  * =========================
