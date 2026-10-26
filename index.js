@@ -74,10 +74,6 @@ const authMiddleware = AuthMiddleware(
   membershipRepository
 );
 
-const VendaRepositoryMongo = require(
-  "./infra/repositories/VendaRepositoryMongo"
-);
-
 const GerarRelatorioVendasUseCase = require(
   "./application/GerarRelatorioVendasUseCase"
 );
