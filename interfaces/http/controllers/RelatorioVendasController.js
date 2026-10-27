@@ -22,24 +22,26 @@ class RelatorioVendasController {
     this.exportarPDF = this.exportarPDF.bind(this);
   }
 
-  obterParametros(req) {
-    const inicio = req.query.inicio;
-    const fim = req.query.fim;
+  
+    obterParametros(req) {
+  const inicio = req.query.inicio || req.query.dataInicial;
+  const fim = req.query.fim || req.query.dataFinal;
 
-    if (!inicio || !fim) {
-      const erro = new Error(
-        "Informe as datas de início e fim do relatório."
-      );
-
-      erro.statusCode = 400;
-      throw erro;
-    }
-
-    return {
-      dataInicio: inicio,
-      dataFim: fim,
-    };
+  if (!inicio || !fim) {
+    const erro = new Error(
+      "Informe as datas de início e fim do relatório."
+    );
+    erro.statusCode = 400;
+    throw erro;
   }
+
+  return {
+    dataInicio: inicio,
+    dataFim: fim,
+    operadorId: req.query.operadorId || undefined,
+    caixaId: req.query.caixaId || undefined,
+  };
+}
 
   async obterRelatorio(req) {
     if (!req.user) {
