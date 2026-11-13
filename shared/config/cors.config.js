@@ -6,7 +6,8 @@ const corsWhiteList = {
     "https://prafood.vercel.app",
     "https://prafoodparceiros.vercel.app",
     "https://essenzaintimasmobile.vercel.app",
-    "https://essenzaintimas.vercel.app"
+    "https://essenzaintimas.vercel.app",
+    "https://serenalislingerie.vercel.app"
   ],
   staging: [
     "https://staging.app.com",
@@ -16,7 +17,8 @@ const corsWhiteList = {
     "https://pratinhopratudoparceiros.vercel.app",
     "https://www.pratinhopratudo.com.br",
     "https://essenzaintimasmobile.vercel.app",
-    "https://essenzaintimas.vercel.app"
+    "https://essenzaintimas.vercel.app",
+    "https://serenalislingerie.vercel.app"
   ],
   production: [
     "https://apicardapiovanburger.onrender.com",
@@ -28,7 +30,8 @@ const corsWhiteList = {
     "https://pratinhopratudoparceiros.vercel.app",
     "https://www.pratinhopratudo.com.br",
     "https://essenzaintimasmobile.vercel.app",
-    "https://essenzaintimas.vercel.app"
+    "https://essenzaintimas.vercel.app",
+    "https://serenalislingerie.vercel.app"
   ],
 };
 
